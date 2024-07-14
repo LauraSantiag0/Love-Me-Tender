@@ -1,5 +1,3 @@
-// netlify/functions/hello.js
-
 import { Router } from "express";
 import serverless from "serverless-http";
 
