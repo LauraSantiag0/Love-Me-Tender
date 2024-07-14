@@ -8,6 +8,8 @@
 	"root": true,
 	"rules": {
 		"indent": "off",
-		"operator-linebreak": "off"
+		"operator-linebreak": "off",
+		"no-unused-vars": "off" 
 	}
+	
 }
