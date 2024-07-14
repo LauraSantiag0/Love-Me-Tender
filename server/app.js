@@ -1,4 +1,5 @@
 import express from "express";
+import apiRouter from "./api";
 import config from "./utils/config";
 import {
   clientRouter,
@@ -21,6 +22,7 @@ if (config.production) {
   app.use(httpsOnly());
 }
 
+app.use(apiRoot, apiRouter);
 app.use("/health", (_, res) => res.sendStatus(200));
 app.use(clientRouter(apiRoot));
 

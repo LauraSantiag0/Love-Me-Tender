@@ -1,6 +1,6 @@
 [build]
   publish = "dist/static"
-  functions = "netlify/functions"
+  functions = "server/functions"
 
 [[redirects]]
   from = "/*"
