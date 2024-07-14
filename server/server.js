@@ -1,5 +1,5 @@
 import http from "node:http";
-import app from "./app"; // Keeping this for future use
+import app from "./app";
 import { connectDb, disconnectDb } from "./db";
 import config from "./utils/config";
 import logger from "./utils/logger";

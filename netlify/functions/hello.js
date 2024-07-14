@@ -1,10 +1,12 @@
-import logger from "../../server/utils/logger";
+// netlify/functions/hello.js
 
-export const handler = async (event, context) => {
-  logger.debug("Welcoming everyone...");
+import { Router } from "express";
+import serverless from "serverless-http";
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ message: "Hello, world!" }),
-  };
-};
+const app = Router();
+
+app.get("/", (req, res) => {
+  res.json({ message: "Hello, world!" });
+});
+
+export const handler = serverless(app);

@@ -21,9 +21,6 @@ if (config.production) {
   app.use(httpsOnly());
 }
 
-// Comment out or remove the API router for now
-// app.use(apiRoot, apiRouter);
-
 app.use("/health", (_, res) => res.sendStatus(200));
 app.use(clientRouter(apiRoot));
 
