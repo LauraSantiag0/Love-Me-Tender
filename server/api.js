@@ -5,7 +5,7 @@ const router = Router();
 
 router.get("/", (_, res) => {
 	logger.debug("Welcoming everyone...");
-	res.json({ message: "Hello, world!" });
+	res.json({ message: "WELCOME TO LOVE ME TENDER SITE" });
 });
 
 export default router;
