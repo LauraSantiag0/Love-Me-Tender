@@ -21,6 +21,7 @@ export function Home() {
 				console.error(err);
 			});
 	}, []);
+	
 
 	return (
 		<main role="main">
