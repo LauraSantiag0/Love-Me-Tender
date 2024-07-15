@@ -78,7 +78,6 @@
 		"helmet": "^7.0.0",
 		"morgan": "^1.10.0",
 		"pg": "^8.11.3",
-		"serverless-http": "^3.2.0",
 		"winston": "^3.10.0"
 	},
 	"engines": {
