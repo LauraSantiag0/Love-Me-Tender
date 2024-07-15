@@ -7,7 +7,7 @@ export function Home() {
 	const [message, setMessage] = useState("Loading...");
 
 	useEffect(() => {
-		fetch("/netlify/functions/hello")
+		fetch("/api")
 			.then((res) => {
 				if (!res.ok) {
 					throw new Error(res.statusText);
