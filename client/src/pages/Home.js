@@ -21,7 +21,6 @@ export function Home() {
 				console.error(err);
 			});
 	}, []);
-	
 
 	return (
 		<main role="main">
@@ -34,5 +33,4 @@ export function Home() {
 		</main>
 	);
 }
-
 export default Home;
