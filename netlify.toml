@@ -1,5 +1,5 @@
 [build]
-  publish = "dist/static"
+  publish = "client/src"
   functions = "netlify/functions"
 
 [[redirects]]
