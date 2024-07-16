@@ -9,7 +9,6 @@ router.get("/", (_, res) => {
 });
 
 router.get("/skills", (req, res) => {
-
 	const skills = [
 		"Website",
 		"Android",
