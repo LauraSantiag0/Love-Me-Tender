@@ -16,7 +16,7 @@ const PublishTenderForm = () => {
 			.then((response) => response.json())
 			.then((data) => {
 				setSkills(data.skills);
-				setErrors(null);
+				setErrors([]);
 			})
 			.catch((error) => {
 				console.error("Error fetching skills:", error);
@@ -78,16 +78,16 @@ const PublishTenderForm = () => {
 			return;
 		}
 
-		if (announcementDate < closingDate) {
+		if (announcementDate >= closingDate) {
 			newErrors.push(
-				"Tender Announcement Date cannot be before the Closing Date."
+				"Tender Announcement Date must be before the Closing Date."
 			);
 			return;
 		}
 
 		if (deadlineDate < announcementDate) {
 			newErrors.push(
-				"Tender Project Deadline Date cannot be before the Announcement Date."
+				"Tender Project Deadline Date must be on or after the Announcement Date."
 			);
 			return;
 		}
@@ -100,15 +100,15 @@ const PublishTenderForm = () => {
 		if (newErrors.length > 0) {
 			setErrors(newErrors);
 		} else {
-		alert("Tender published successfully!");
+			alert("Tender published successfully!");
 
-		setTitle("");
-		setDescription("");
-		setClosingDate("");
-		setAnnouncementDate("");
-		setDeadlineDate("");
-		setSelectedSkills([]);
-		setErrors([]);
+			setTitle("");
+			setDescription("");
+			setClosingDate("");
+			setAnnouncementDate("");
+			setDeadlineDate("");
+			setSelectedSkills([]);
+			setErrors([]);
 	    }
 	};
 
