@@ -67,6 +67,7 @@ const PublishTenderForm = () => {
 			newErrors.push(
 				"Tender Description must be between 100 and 7500 characters."
 			);
+	
 		}
 
 		const today = new Date().toISOString().split("T")[0];
@@ -82,6 +83,7 @@ const PublishTenderForm = () => {
 
 		if (deadlineDate < announcementDate) {
 			newErrors.push(
+
 				"Tender Project Deadline Date must be after the Announcement Date."
 			);
 		}
@@ -128,6 +130,7 @@ const PublishTenderForm = () => {
 		} else {
 			setErrors(newErrors);
 		}
+
 	};
 
 	return (
