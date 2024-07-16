@@ -15,12 +15,13 @@ const PublishTenderForm = () => {
 		fetch("/api/skills")
 			.then((response) => response.json())
 			.then((data) => {
+				console.log("Skills fetched successfully:", data.skills);
 				setSkills(data.skills);
 				setErrors([]);
 			})
 			.catch((error) => {
 				console.error("Error fetching skills:", error);
-				setErrors("Failed to fetch skills. Please try again later.");
+				setErrors(["Failed to fetch skills. Please try again later."]);
 			});
 	}, []);
 
@@ -92,14 +93,15 @@ const PublishTenderForm = () => {
 			return;
 		}
 
-		if (skills.length === 0) {
+		if (selectedSkills.length === 0) {
 			newErrors.push("Please select at least one skill.");
 			return;
 		}
 
-		if (newErrors.length > 0) {
-			setErrors(newErrors);
-		} else {
+		console.log("New errors:", newErrors);
+		setErrors(newErrors);
+
+		if (newErrors.length === 0) {
 			alert("Tender published successfully!");
 
 			setTitle("");
@@ -109,7 +111,7 @@ const PublishTenderForm = () => {
 			setDeadlineDate("");
 			setSelectedSkills([]);
 			setErrors([]);
-	    }
+		}
 	};
 
 	return (
