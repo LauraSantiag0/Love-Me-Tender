@@ -15,9 +15,11 @@ const PublishTenderForm = () => {
 			.then((response) => response.json())
 			.then((data) => {
 				setSkills(data.skills);
+				setError(null);
 			})
 			.catch((error) => {
 				console.error("Error fetching skills:", error);
+				setError("Failed to fetch skills. Please try again later.");
 			});
 	}, []);
 
