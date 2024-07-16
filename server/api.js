@@ -71,7 +71,6 @@ router.post("/publish-tenders", (req, res) => {
 });
 
 router.get("/skills", (req, res) => {
-
 	const skills = [
 		"Website",
 		"Android",
