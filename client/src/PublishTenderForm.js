@@ -67,7 +67,6 @@ const PublishTenderForm = () => {
 			newErrors.push(
 				"Tender Description must be between 100 and 7500 characters."
 			);
-	
 		}
 
 		const today = new Date().toISOString().split("T")[0];
