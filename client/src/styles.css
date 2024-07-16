@@ -41,7 +41,6 @@ select {
 button {
     display: block;
     margin-top: 20px;
-    /* width: 100%; */
     padding: 10px;
     background: #2642c0;
     color: white;

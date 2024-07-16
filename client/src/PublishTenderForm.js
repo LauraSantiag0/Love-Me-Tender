@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./styles.css";
 
 const PublishTenderForm = () => {
@@ -8,6 +8,49 @@ const PublishTenderForm = () => {
 	const [announcementDate, setAnnouncementDate] = useState("");
 	const [deadlineDate, setDeadlineDate] = useState("");
 	const [skills, setSkills] = useState([]);
+	const [selectedSkills, setSelectedSkills] = useState([]);
+
+	useEffect(() => {
+		fetch("/api/skills")
+			.then((response) => response.json())
+			.then((data) => {
+				setSkills(data.skills);
+			})
+			.catch((error) => {
+				console.error("Error fetching skills:", error);
+			});
+	}, []);
+
+	const handleTitleChange = (e) => {
+		setTitle(e.target.value);
+	};
+
+	const handleDescriptionChange = (e) => {
+		setDescription(e.target.value);
+	};
+
+	const handleClosingDateChange = (e) => {
+		setClosingDate(e.target.value);
+	};
+
+	const handleAnnouncementDateChange = (e) => {
+		setAnnouncementDate(e.target.value);
+	};
+
+	const handleDeadlineDateChange = (e) => {
+		setDeadlineDate(e.target.value);
+	};
+
+	const handleSkillsChange = (event) => {
+		const options = event.target.options;
+		const selectedSkills = [];
+		for (const option of options) {
+			if (option.selected) {
+				selectedSkills.push(option.value);
+			}
+		}
+		setSelectedSkills(selectedSkills);
+	};
 
 	const handleSubmit = (event) => {
 		event.preventDefault();
@@ -45,34 +88,14 @@ const PublishTenderForm = () => {
 			return;
 		}
 
-		console.log({
-			title,
-			description,
-			closingDate,
-			announcementDate,
-			deadlineDate,
-			skills,
-		});
-
 		alert("Tender published successfully!");
-		
+
 		setTitle("");
 		setDescription("");
 		setClosingDate("");
 		setAnnouncementDate("");
 		setDeadlineDate("");
 		setSkills([]);
-	};
-
-	const handleSkillsChange = (event) => {
-		const options = event.target.options;
-		const selectedSkills = [];
-		for (const option of options) {
-			if (option.selected) {
-				selectedSkills.push(option.value);
-			}
-		}
-		setSkills(selectedSkills);
 	};
 
 	return (
@@ -85,7 +108,7 @@ const PublishTenderForm = () => {
 						type="text"
 						id="title"
 						value={title}
-						onChange={(e) => setTitle(e.target.value)}
+						onChange={handleTitleChange}
 						maxLength="50"
 						required
 					/>
@@ -95,7 +118,7 @@ const PublishTenderForm = () => {
 					<textarea
 						id="description"
 						value={description}
-						onChange={(e) => setDescription(e.target.value)}
+						onChange={handleDescriptionChange}
 						maxLength="7500"
 						required
 					></textarea>
@@ -106,7 +129,7 @@ const PublishTenderForm = () => {
 						type="date"
 						id="closingDate"
 						value={closingDate}
-						onChange={(e) => setClosingDate(e.target.value)}
+						onChange={handleClosingDateChange}
 						required
 					/>
 				</div>
@@ -116,7 +139,7 @@ const PublishTenderForm = () => {
 						type="date"
 						id="announcementDate"
 						value={announcementDate}
-						onChange={(e) => setAnnouncementDate(e.target.value)}
+						onChange={handleAnnouncementDateChange}
 						required
 					/>
 				</div>
@@ -126,7 +149,7 @@ const PublishTenderForm = () => {
 						type="date"
 						id="deadlineDate"
 						value={deadlineDate}
-						onChange={(e) => setDeadlineDate(e.target.value)}
+						onChange={handleDeadlineDateChange}
 						required
 					/>
 				</div>
@@ -135,16 +158,15 @@ const PublishTenderForm = () => {
 					<select
 						id="skills"
 						multiple
-						value={skills}
+						value={selectedSkills}
 						onChange={handleSkillsChange}
 						required
 					>
-						<option value="Website">Website</option>
-						<option value="Android">Android</option>
-						<option value="iOS">iOS</option>
-						<option value="Backend">Backend</option>
-						<option value="Frontend">Frontend</option>
-						<option value="Full-stack">Full-stack</option>
+						{skills.map((skill) => (
+							<option key={skill} value={skill}>
+								{skill}
+							</option>
+						))}
 					</select>
 				</div>
 				<button type="submit">Publish Tender</button>
