@@ -83,7 +83,6 @@ const PublishTenderForm = () => {
 
 		if (deadlineDate < announcementDate) {
 			newErrors.push(
-
 				"Tender Project Deadline Date must be after the Announcement Date."
 			);
 		}
@@ -91,7 +90,7 @@ const PublishTenderForm = () => {
 		if (selectedSkills.length === 0) {
 			newErrors.push("Please select at least one skill.");
 		}
-
+		
 		if (newErrors.length === 0) {
 			try {
 				const formData = {
@@ -130,7 +129,6 @@ const PublishTenderForm = () => {
 		} else {
 			setErrors(newErrors);
 		}
-
 	};
 
 	return (
