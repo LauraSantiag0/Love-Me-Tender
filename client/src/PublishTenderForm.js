@@ -9,17 +9,18 @@ const PublishTenderForm = () => {
 	const [deadlineDate, setDeadlineDate] = useState("");
 	const [skills, setSkills] = useState([]);
 	const [selectedSkills, setSelectedSkills] = useState([]);
+	const [errors, setErrors] = useState([]);
 
 	useEffect(() => {
 		fetch("/api/skills")
 			.then((response) => response.json())
 			.then((data) => {
 				setSkills(data.skills);
-				setError(null);
+				setErrors(null);
 			})
 			.catch((error) => {
 				console.error("Error fetching skills:", error);
-				setError("Failed to fetch skills. Please try again later.");
+				setErrors("Failed to fetch skills. Please try again later.");
 			});
 	}, []);
 
@@ -57,39 +58,48 @@ const PublishTenderForm = () => {
 	const handleSubmit = (event) => {
 		event.preventDefault();
 
+		const newErrors = [];
+
 		if (title.length < 10 || title.length > 50) {
-			alert("Tender Title must be between 10 and 50 characters.");
+			newErrors.push("Tender Title must be between 10 and 50 characters.");
 			return;
 		}
 
 		if (description.length < 100 || description.length > 7500) {
-			alert("Tender Description must be between 100 and 7500 characters.");
+			newErrors.push(
+				"Tender Description must be between 100 and 7500 characters."
+			);
 			return;
 		}
 
 		const today = new Date().toISOString().split("T")[0];
 		if (closingDate < today) {
-			alert("Tender Closing Date cannot be in the past.");
+			newErrors.push("Tender Closing Date cannot be in the past.");
 			return;
 		}
 
 		if (announcementDate < closingDate) {
-			alert("Tender Announcement Date cannot be before the Closing Date.");
+			newErrors.push(
+				"Tender Announcement Date cannot be before the Closing Date."
+			);
 			return;
 		}
 
 		if (deadlineDate < announcementDate) {
-			alert(
+			newErrors.push(
 				"Tender Project Deadline Date cannot be before the Announcement Date."
 			);
 			return;
 		}
 
 		if (skills.length === 0) {
-			alert("Please select at least one skill.");
+			newErrors.push("Please select at least one skill.");
 			return;
 		}
 
+		if (newErrors.length > 0) {
+			setErrors(newErrors);
+		} else {
 		alert("Tender published successfully!");
 
 		setTitle("");
@@ -97,12 +107,23 @@ const PublishTenderForm = () => {
 		setClosingDate("");
 		setAnnouncementDate("");
 		setDeadlineDate("");
-		setSkills([]);
+		setSelectedSkills([]);
+		setErrors([]);
+	    }
 	};
 
 	return (
 		<div className="container">
 			<h1>Publish Tender</h1>
+			{errors.length > 0 && (
+				<div className="error-message">
+					<ul>
+						{errors.map((error, index) => (
+							<li key={index}>{error}</li>
+						))}
+					</ul>
+				</div>
+			)}
 			<form onSubmit={handleSubmit}>
 				<div className="form-group">
 					<label htmlFor="title">Tender Title:</label>
