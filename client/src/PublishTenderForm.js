@@ -15,6 +15,7 @@ const PublishTenderForm = () => {
 		fetch("/api/skills")
 			.then((response) => response.json())
 			.then((data) => {
+				console.log("Skills fetched successfully:", data.skills);
 				setSkills(data.skills);
 				setErrors([]);
 			})
@@ -101,7 +102,7 @@ const PublishTenderForm = () => {
 					deadlineDate,
 					selectedSkills,
 				};
-
+				
 				const response = await fetch("/api/publish-tenders", {
 					method: "POST",
 					headers: {
