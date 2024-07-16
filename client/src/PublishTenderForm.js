@@ -54,58 +54,76 @@ const PublishTenderForm = () => {
 		setSelectedSkills(selectedSkills);
 	};
 
-	const handleSubmit = (event) => {
+	const handleSubmit = async (event) => {
 		event.preventDefault();
 
 		const newErrors = [];
 
 		if (title.length < 10 || title.length > 50) {
 			newErrors.push("Tender Title must be between 10 and 50 characters.");
-			return;
 		}
 
 		if (description.length < 100 || description.length > 7500) {
 			newErrors.push(
-				"Tender Description must be between 100 and 7500 characters."
-			);
-			return;
+				"Tender Description must be between 100 and 7500 characters.");
 		}
 
 		const today = new Date().toISOString().split("T")[0];
 		if (closingDate < today) {
 			newErrors.push("Tender Closing Date cannot be in the past.");
-			return;
 		}
 
-		if (announcementDate >= closingDate) {
+		if (announcementDate > closingDate) {
 			newErrors.push(
-				"Tender Announcement Date must be before the Closing Date."
-			);
-			return;
+				"Tender Announcement Date must be before the Closing Date.");
 		}
 
 		if (deadlineDate < announcementDate) {
 			newErrors.push(
-				"Tender Project Deadline Date must be on or after the Announcement Date."
-			);
-			return;
+				"Tender Project Deadline Date must be after the Announcement Date.");
 		}
 
 		if (selectedSkills.length === 0) {
 			newErrors.push("Please select at least one skill.");
-			return;
 		}
 
-		if (newErrors.length === 0) {
-			alert("Tender published successfully!");
+		if(newErrors.length === 0) {
+			 try {
+					const formData = {
+						title,
+						description,
+						closingDate,
+						announcementDate,
+						deadlineDate,
+						selectedSkills,
+					};
 
-			setTitle("");
-			setDescription("");
-			setClosingDate("");
-			setAnnouncementDate("");
-			setDeadlineDate("");
-			setSelectedSkills([]);
-			setErrors([]);
+					const response = await fetch("/api/publish-tenders", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify(formData),
+					});
+
+					if (!response.ok) {
+						const errorData = await response.json();
+						throw new Error(errorData.error || "Failed to publish tender.");
+					}
+
+					setTitle("");
+					setDescription("");
+					setClosingDate("");
+					setAnnouncementDate("");
+					setDeadlineDate("");
+					setSelectedSkills([]);
+					setErrors([]);
+					alert("Tender published successfully!");
+				} catch (error) {
+					setErrors([error.message]);
+				}
+		}else{
+			setErrors(newErrors);
 		}
 	};
 
@@ -144,22 +162,22 @@ const PublishTenderForm = () => {
 					></textarea>
 				</div>
 				<div className="form-group">
-					<label htmlFor="closingDate">Tender Closing Date:</label>
-					<input
-						type="date"
-						id="closingDate"
-						value={closingDate}
-						onChange={handleClosingDateChange}
-						required
-					/>
-				</div>
-				<div className="form-group">
 					<label htmlFor="announcementDate">Tender Announcement Date:</label>
 					<input
 						type="date"
 						id="announcementDate"
 						value={announcementDate}
 						onChange={handleAnnouncementDateChange}
+						required
+					/>
+				</div>
+				<div className="form-group">
+					<label htmlFor="closingDate">Tender Closing Date:</label>
+					<input
+						type="date"
+						id="closingDate"
+						value={closingDate}
+						onChange={handleClosingDateChange}
 						required
 					/>
 				</div>
