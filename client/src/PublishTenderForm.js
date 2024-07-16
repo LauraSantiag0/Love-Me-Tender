@@ -15,12 +15,10 @@ const PublishTenderForm = () => {
 		fetch("/api/skills")
 			.then((response) => response.json())
 			.then((data) => {
-				console.log("Skills fetched successfully:", data.skills);
 				setSkills(data.skills);
 				setErrors([]);
 			})
 			.catch((error) => {
-				console.error("Error fetching skills:", error);
 				setErrors(["Failed to fetch skills. Please try again later."]);
 			});
 	}, []);
@@ -97,9 +95,6 @@ const PublishTenderForm = () => {
 			newErrors.push("Please select at least one skill.");
 			return;
 		}
-
-		console.log("New errors:", newErrors);
-		setErrors(newErrors);
 
 		if (newErrors.length === 0) {
 			alert("Tender published successfully!");
