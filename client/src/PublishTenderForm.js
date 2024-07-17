@@ -87,7 +87,7 @@ const PublishTenderForm = () => {
 			newErrors.push("Please select at least one skill.");
 		}
 
-		if(newErrors.length === 0) {
+		if (newErrors.length === 0) {
 			 try {
 					const formData = {
 						title,

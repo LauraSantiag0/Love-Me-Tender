@@ -23,28 +23,36 @@ router.get("/skills", (req, res) => {
 });
 
 router.post("/publish-tenders", (req, res) => {
-    const formData = req.body;
+	const formData = req.body;
 
 	const newErrors = [];
 
-    if (!formData.title || formData.title.length < 10 || formData.title.length > 50) {
-        newErrors.push("Tender Title must be between 10 and 50 characters.");
-    }
+	if (
+		!formData.title ||
+		formData.title.length < 10 ||
+		formData.title.length > 50
+	) {
+		newErrors.push("Tender Title must be between 10 and 50 characters.");
+	}
 
-    if (!formData.description || formData.description.length < 100 || formData.description.length > 7500) {
-        newErrors.push("Tender Description must be between 100 and 7500 characters.");
-    }
+	if (
+		!formData.description ||
+		formData.description.length < 100 ||
+		formData.description.length > 7500
+	) {
+		newErrors.push(
+			"Tender Description must be between 100 and 7500 characters."
+		);
+	}
 
-    const today = new Date().toISOString().split("T")[0];
-    if (formData.closingDate < today) {
-        newErrors.push("Tender Closing Date cannot be in the past.");
-    }
+	const today = new Date().toISOString().split("T")[0];
+	if (formData.closingDate < today) {
+		newErrors.push("Tender Closing Date cannot be in the past.");
+	}
 
 	if (formData.announcementDate > formData.closingDate) {
-			newErrors.push(
-				"Tender Announcement Date must be before the Closing Date."
-			);
-		}
+		newErrors.push("Tender Announcement Date must be before the Closing Date.");
+	}
 
 	if (formData.deadlineDate < formData.announcementDate) {
 		newErrors.push(
@@ -60,7 +68,7 @@ router.post("/publish-tenders", (req, res) => {
 		return res.status(400).json({ errors: newErrors });
 	}
 
-    res.status(200).json({ message: "Form submitted successfully!" });
+	res.status(200).json({ message: "Form submitted successfully!" });
 });
 
 export default router;
