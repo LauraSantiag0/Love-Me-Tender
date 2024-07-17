@@ -18,7 +18,7 @@ const PublishTenderForm = () => {
 				setSkills(data.skills);
 				setErrors([]);
 			})
-			.catch((error) => {
+			.catch(() => {
 				setErrors(["Failed to fetch skills. Please try again later."]);
 			});
 	}, []);
@@ -65,7 +65,8 @@ const PublishTenderForm = () => {
 
 		if (description.length < 100 || description.length > 7500) {
 			newErrors.push(
-				"Tender Description must be between 100 and 7500 characters.");
+				"Tender Description must be between 100 and 7500 characters."
+			);
 		}
 
 		const today = new Date().toISOString().split("T")[0];
@@ -75,12 +76,14 @@ const PublishTenderForm = () => {
 
 		if (announcementDate > closingDate) {
 			newErrors.push(
-				"Tender Announcement Date must be before the Closing Date.");
+				"Tender Announcement Date must be before the Closing Date."
+			);
 		}
 
 		if (deadlineDate < announcementDate) {
 			newErrors.push(
-				"Tender Project Deadline Date must be after the Announcement Date.");
+				"Tender Project Deadline Date must be after the Announcement Date."
+			);
 		}
 
 		if (selectedSkills.length === 0) {
@@ -88,41 +91,41 @@ const PublishTenderForm = () => {
 		}
 
 		if (newErrors.length === 0) {
-			 try {
-					const formData = {
-						title,
-						description,
-						closingDate,
-						announcementDate,
-						deadlineDate,
-						selectedSkills,
-					};
+			try {
+				const formData = {
+					title,
+					description,
+					closingDate,
+					announcementDate,
+					deadlineDate,
+					selectedSkills,
+				};
 
-					const response = await fetch("/api/publish-tenders", {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify(formData),
-					});
+				const response = await fetch("/api/publish-tenders", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(formData),
+				});
 
-					if (!response.ok) {
-						const errorData = await response.json();
-						throw new Error(errorData.error || "Failed to publish tender.");
-					}
-
-					setTitle("");
-					setDescription("");
-					setClosingDate("");
-					setAnnouncementDate("");
-					setDeadlineDate("");
-					setSelectedSkills([]);
-					setErrors([]);
-					alert("Tender published successfully!");
-				} catch (error) {
-					setErrors([error.message]);
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.error || "Failed to publish tender.");
 				}
-		}else{
+
+				setTitle("");
+				setDescription("");
+				setClosingDate("");
+				setAnnouncementDate("");
+				setDeadlineDate("");
+				setSelectedSkills([]);
+				setErrors([]);
+				alert("Tender published successfully!");
+			} catch (error) {
+				setErrors([error.message]);
+			}
+		} else {
 			setErrors(newErrors);
 		}
 	};
