@@ -82,7 +82,7 @@ router.get("/skills", (req, res) => {
 
 	skills.sort();
 
-	res.json({ skills });
+	res.status(200).json({ skills });
 });
 
 router.post("/publish-tenders", (req, res) => {
@@ -123,7 +123,7 @@ router.post("/publish-tenders", (req, res) => {
 		return res.status(400).json({ errors: newErrors });
 	}
 
-    res.json({ message: "Form submitted successfully!" });
+    res.status(200).json({ message: "Form submitted successfully!" });
 });
 
 export default router;
