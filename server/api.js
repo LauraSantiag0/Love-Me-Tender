@@ -4,7 +4,7 @@ import logger from "./utils/logger";
 const router = Router();
 
 router.get("/", (_, res) => {
-	res.json({ message: "WELCOME TO LOVE ME TENDER SITE" });
+	res.status(200).json({ message: "WELCOME TO LOVE ME TENDER SITE" });
 });
 
 router.get("/skills", (req, res) => {
@@ -19,7 +19,7 @@ router.get("/skills", (req, res) => {
 
 	skills.sort();
 
-	res.json({ skills });
+	res.status(200).json({ skills });
 });
 
 router.post("/publish-tenders", (req, res) => {
@@ -60,7 +60,7 @@ router.post("/publish-tenders", (req, res) => {
 		return res.status(400).json({ errors: newErrors });
 	}
 
-    res.json({ message: "Form submitted successfully!" });
+    res.status(200).json({ message: "Form submitted successfully!" });
 });
 
 export default router;
