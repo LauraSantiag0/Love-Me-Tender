@@ -1,5 +1,4 @@
 import { Pool } from "pg";
-
 import config from "./utils/config";
 import logger from "./utils/logger";
 
@@ -27,13 +26,9 @@ export const connectDb = async () => {
 
 export const disconnectDb = () => pool.end();
 
-/**
- * Access this with `import db from "path/to/db";` then use it with
- * `await db.query("<SQL>", [...<variables>])`.
- */
-export default {
-	query: (...args) => {
-		logger.debug("Postgres querying %O", args);
-		return pool.query.apply(pool, args);
+export default{
+	query: (text, params) => {
+		logger.debug("Postgres querying %O", { text, params });
+		return pool.query(text, params);
 	},
 };
