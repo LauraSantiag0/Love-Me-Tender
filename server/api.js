@@ -105,6 +105,7 @@ router.get("/tenders", async (req, res) => {
 	const page = parseInt(req.query.page, 10) || 1;
 	const limit = parseInt(req.query.limit, 10) || 25;
 	const offset = (page - 1) * limit;
+<<<<<<< HEAD
 
 	const countSql = "SELECT COUNT(*) FROM tender";
 	const dataSql = `
@@ -134,6 +135,15 @@ router.get("/tenders", async (req, res) => {
 } catch (err) {
 	res.status(500).json({ code: "SERVER_ERROR" });
 }
+=======
+	const sql = `SELECT id, title, creation_date, announcement_date, deadline, status FROM tender ORDER BY creation_date DESC LIMIT ${limit} OFFSET ${offset}`;
+	try {
+		const result = await query(sql);
+		res.status(200).json({ tenders: result.rows });
+	} catch (err) {
+		res.status(500).json({ error: "Database error" });
+	}
+>>>>>>> b9b839a (fix code according to feedback)
 });
 
 export default router;

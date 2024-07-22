@@ -69,6 +69,7 @@ const TendersList = () => {
 					</tr>
 				</thead>
 				<tbody>
+					{console.log(tenders)}
 					{tenders.map((tender) => (
 						<tr key={tender.id}>
 							<td>{tender.id}</td>
