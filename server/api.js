@@ -10,60 +10,58 @@ router.get("/", (_, res) => {
 	res.status(200).json({ message: "WELCOME TO LOVE ME TENDER SITE" });
 });
 
-router.get("/skills", (req, res) => {
-	const skills = [
-		"Website",
-		"Android",
-		"iOS",
-		"Backend",
-		"Frontend",
-		"Full-stack",
-	];
-
-	skills.sort();
-
-	res.status(200).json({ skills });
+router.get("/skills", async (req, res) => {
+	try {
+		const result = await db.query(
+			"SELECT skill_name FROM skill ORDER BY skill_name ASC"
+		);
+		const skills = result.rows.map((row) => row.skill_name);
+		res.status(200).json({ resource:{ skills } });
+	} catch (error) {
+		res
+			.status(500)
+			.json({ code: "SERVER_ERROR" });
+	}
 });
 
-router.post("/publish-tenders", (req, res) => {
-	const formData = req.body;
+router.post("/publish-tenders", async (req, res) => {
+	const {
+		title,
+		description,
+		closingDate,
+		announcementDate,
+		deadlineDate,
+		selectedSkills,
+	} = req.body;
 
 	const newErrors = [];
 
-	if (
-		!formData.title ||
-		formData.title.length < 10 ||
-		formData.title.length > 50
-	) {
+	if (!title || title.length < 10 || title.length > 50) {
 		newErrors.push("Tender Title must be between 10 and 50 characters.");
 	}
 
-	if (
-		!formData.description ||
-		formData.description.length < 100 ||
-		formData.description.length > 7500
-	) {
+	if (!description || description.length < 100 || description.length > 7500) {
 		newErrors.push(
 			"Tender Description must be between 100 and 7500 characters."
 		);
 	}
 
 	const today = new Date().toISOString().split("T")[0];
-	if (formData.closingDate < today) {
+	if (closingDate < today) {
 		newErrors.push("Tender Closing Date cannot be in the past.");
 	}
 
-	if (formData.announcementDate > formData.closingDate) {
+	if (announcementDate > closingDate) {
 		newErrors.push("Tender Announcement Date must be before the Closing Date.");
 	}
 
-	if (formData.deadlineDate < formData.announcementDate) {
+	if (deadlineDate < announcementDate) {
 		newErrors.push(
 			"Tender Project Deadline Date must be after the Announcement Date."
 		);
 	}
 
-	if (formData.selectedSkills.length === 0) {
+	if (selectedSkills.length === 0) {
 		newErrors.push("Please select at least one skill.");
 	}
 
@@ -71,7 +69,34 @@ router.post("/publish-tenders", (req, res) => {
 		return res.status(400).json({ errors: newErrors });
 	}
 
-	res.status(200).json({ message: "Form submitted successfully!" });
+	try {
+		const insertTenderQuery = `
+		INSERT INTO tender (title, announcement_date, deadline, description, closing_date)
+		VALUES ($1, $2, $3, $4, $5) RETURNING id
+		`;
+		const tenderResult = await db.query(insertTenderQuery, [
+			title,
+			announcementDate,
+			deadlineDate,
+			description,
+			closingDate,
+		]);
+		const tenderId = tenderResult.rows[0].id;
+
+		const insertTenderSkillsQuery = `
+		INSERT INTO tender_skill (tender_id, skill_id)
+		VALUES ($1, (SELECT skill_id FROM skill WHERE skill_name = $2))
+		`;
+		for (const skill of selectedSkills) {
+			await db.query(insertTenderSkillsQuery, [tenderId, skill]);
+		}
+
+		res.status(200).json({ message: "Form submitted successfully!" });
+	} catch (error) {
+		res
+			.status(500)
+			.json({ code: "SERVER_ERROR" });
+	}
 });
 
 router.get("/buyer-tender", async (req, res) => {
