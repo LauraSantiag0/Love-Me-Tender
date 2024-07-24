@@ -114,7 +114,7 @@ const PublishTenderForm = () => {
 
 				if (!response.ok) {
 					const errorData = await response.json();
-					throw new Error(errorData.code || "Failed to publish tender.");
+					throw new Error(errorData.error || "Failed to publish tender.");
 				}
 
 				setTitle("");

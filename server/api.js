@@ -17,9 +17,10 @@ router.get("/skills", async (req, res) => {
 		);
 		res.status(200).json({ skills: result.rows });
 	} catch (error) {
-		res
-			.status(500)
-			.json({ code: "SERVER_ERROR" });
+		res.status(500).json({
+			code: "SERVER_ERROR",
+			error: "Failed to fetch skills. Please try again later.",
+		});
 	}
 });
 
@@ -65,7 +66,9 @@ router.post("/tender", async (req, res) => {
 	}
 
 	if (newErrors.length > 0) {
-		return res.status(400).json({});
+		return res
+			.status(400)
+			.json({ code: "VALIDATION_ERROR", errors: newErrors });
 	}
 
 	const client = await pool.connect();
@@ -76,7 +79,7 @@ router.post("/tender", async (req, res) => {
 		INSERT INTO tender (title, announcement_date, deadline, description, closing_date)
 		VALUES ($1, $2, $3, $4, $5) RETURNING id
 		`;
-		const tenderResult = await db.query(insertTenderQuery, [
+		const tenderResult = await client.query(insertTenderQuery, [
 			title,
 			announcementDate,
 			deadlineDate,
@@ -94,13 +97,19 @@ router.post("/tender", async (req, res) => {
 		}
 
 		await client.query("COMMIT");
-		res.status(201).json({
-			message: "Form submitted successfully!",
-			resource: { tenderId },
-		});
+
+		const fetchTenderQuery = `
+		SELECT * FROM tender WHERE id = $1
+		`;
+		const tenderDetails = await client.query(fetchTenderQuery, [tenderId]);
+
+		res.status(201).json({ resource: tenderDetails.rows[0] });
 	} catch (error) {
 		await client.query("ROLLBACK");
-		res.status(500).json({ code: "SERVER_ERROR" });
+		res.status(500).json({
+			code: "SERVER_ERROR",
+			error: "Failed to publish tender. Please try again later.",
+		});
 	} finally {
 		client.release();
 	}
