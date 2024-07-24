@@ -12,15 +12,18 @@ const PublishTenderForm = () => {
 	const [errors, setErrors] = useState([]);
 
 	useEffect(() => {
-		fetch("/api/skills")
-			.then((response) => response.json())
-			.then((data) => {
+		const fetchSkills = async () => {
+			try {
+				const response = await fetch("/api/skills");
+				const data = await response.json();
 				setSkills(data.skills);
 				setErrors([]);
-			})
-			.catch(() => {
+			} catch (error) {
 				setErrors(["Failed to fetch skills. Please try again later."]);
-			});
+			}
+		};
+
+		fetchSkills();
 	}, []);
 
 	const handleTitleChange = (e) => {
@@ -101,7 +104,7 @@ const PublishTenderForm = () => {
 					selectedSkills,
 				};
 
-				const response = await fetch("/api/publish-tenders", {
+				const response = await fetch("/api/tender", {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
@@ -111,7 +114,7 @@ const PublishTenderForm = () => {
 
 				if (!response.ok) {
 					const errorData = await response.json();
-					throw new Error(errorData.error || "Failed to publish tender.");
+					throw new Error(errorData.code || "Failed to publish tender.");
 				}
 
 				setTitle("");
@@ -204,8 +207,8 @@ const PublishTenderForm = () => {
 						required
 					>
 						{skills.map((skill) => (
-							<option key={skill} value={skill}>
-								{skill}
+							<option key={skill.skill_id} value={skill.skill_id}>
+								{skill.skill_name}
 							</option>
 						))}
 					</select>

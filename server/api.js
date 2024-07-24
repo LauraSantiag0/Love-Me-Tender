@@ -13,10 +13,9 @@ router.get("/", (_, res) => {
 router.get("/skills", async (req, res) => {
 	try {
 		const result = await db.query(
-			"SELECT skill_name FROM skill ORDER BY skill_name ASC"
+			"SELECT skill_id, skill_name FROM skill ORDER BY skill_name ASC"
 		);
-		const skills = result.rows.map((row) => row.skill_name);
-		res.status(200).json({ resource:{ skills } });
+		res.status(200).json({ skills: result.rows });
 	} catch (error) {
 		res
 			.status(500)
@@ -24,7 +23,7 @@ router.get("/skills", async (req, res) => {
 	}
 });
 
-router.post("/publish-tenders", async (req, res) => {
+router.post("/tender", async (req, res) => {
 	const {
 		title,
 		description,
@@ -66,10 +65,13 @@ router.post("/publish-tenders", async (req, res) => {
 	}
 
 	if (newErrors.length > 0) {
-		return res.status(400).json({ errors: newErrors });
+		return res.status(400).json({});
 	}
 
+	const client = await pool.connect();
 	try {
+		await client.query("BEGIN");
+
 		const insertTenderQuery = `
 		INSERT INTO tender (title, announcement_date, deadline, description, closing_date)
 		VALUES ($1, $2, $3, $4, $5) RETURNING id
@@ -85,17 +87,22 @@ router.post("/publish-tenders", async (req, res) => {
 
 		const insertTenderSkillsQuery = `
 		INSERT INTO tender_skill (tender_id, skill_id)
-		VALUES ($1, (SELECT skill_id FROM skill WHERE skill_name = $2))
+		VALUES ($1, $2)
 		`;
-		for (const skill of selectedSkills) {
-			await db.query(insertTenderSkillsQuery, [tenderId, skill]);
+		for (const skillId of selectedSkills) {
+			await client.query(insertTenderSkillsQuery, [tenderId, skillId]);
 		}
 
-		res.status(200).json({ message: "Form submitted successfully!" });
+		await client.query("COMMIT");
+		res.status(201).json({
+			message: "Form submitted successfully!",
+			resource: { tenderId },
+		});
 	} catch (error) {
-		res
-			.status(500)
-			.json({ code: "SERVER_ERROR" });
+		await client.query("ROLLBACK");
+		res.status(500).json({ code: "SERVER_ERROR" });
+	} finally {
+		client.release();
 	}
 });
 
