@@ -134,16 +134,6 @@ router.get("/tenders", async (req, res) => {
 } catch (err) {
 	res.status(500).json({ code: "SERVER_ERROR" });
 }
-	try {
-		const result = await db.query(dataSql, [limit, offset]);
-		const tenders = result.rows;
-
-		const hasMore = tenders.length === limit;
-
-		res.status(200).json({ tenders, hasMore });
-	} catch (err) {
-		res.status(500).json({ error: "Database error. Please try again later" });
-	}
 });
 
 export default router;
