@@ -1,9 +1,9 @@
 {
 	"dev": {
 		"driver": "pg",
-		"user": "postgres",
-		"password": "opensesame",
-		"host": "localhost",
+		"user": "cyf_tms_user",
+		"password": "s5WAaZQcQd4g6ElcUE6B0t4NXOmTNF00",
+		"host": "dpg-cqhc5vdds78s73bd159g-a.virginia-postgres.render.com",
 		"database": "cyf_tms",
 		"port": "5432"
 	}
