@@ -17,10 +17,7 @@ router.get("/skills", async (req, res) => {
 		);
 		res.status(200).json({ skills: result.rows });
 	} catch (error) {
-		res.status(500).json({
-			code: "SERVER_ERROR",
-			error: "Failed to fetch skills. Please try again later.",
-		});
+		res.status(500).json({});
 	}
 });
 
@@ -106,10 +103,7 @@ router.post("/tender", async (req, res) => {
 		res.status(201).json({ resource: tenderDetails.rows[0] });
 	} catch (error) {
 		await client.query("ROLLBACK");
-		res.status(500).json({
-			code: "SERVER_ERROR",
-			error: "Failed to publish tender. Please try again later.",
-		});
+		res.status(500).json({});
 	} finally {
 		client.release();
 	}
