@@ -31,8 +31,8 @@ export const disconnectDb = () => pool.end();
  * `await db.query("<SQL>", [...<variables>])`.
  */
 export default {
-	query: (text, params) => {
-		logger.debug("Postgres querying %O", { text, params });
-		return pool.query(text, params);
+	query: (...args) => {
+		logger.debug("Postgres querying %O", args);
+		return pool.query.apply(pool, args);
 	},
 };

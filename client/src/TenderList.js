@@ -16,26 +16,26 @@ const TendersList = () => {
 
 	const fetchTenders = async (page) => {
 		setLoading(true);
-	try {
-		const response = await fetch(`/api/tenders?page=${page}`);
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
-		const data = await response.json();
+		try {
+			const response = await fetch(`/api/tenders?page=${page}`);
+			if (!response.ok) {
+				throw new Error("Failed to fetch tenders. Please try again later.");
+			}
+			const data = await response.json();
 
-		if (Array.isArray(data.resource.tenders)) {
-			setTenders(data.resource.tenders);
-			setPagination(data.resource.pagination);
-			setError(null);
-		} else {
-			throw new Error("Server error");
+			if (data.results && data.pagination) {
+				setTenders(data.results);
+				setPagination(data.pagination);
+				setError(null);
+			} else {
+				throw new Error("Server error");
+			}
+		} catch (error) {
+			setError("Error fetching tenders: " + error.message);
+		} finally {
+			setLoading(false);
 		}
-	} catch (error) {
-		setError("Error fetching tenders: " + error.message);
-	} finally {
-		setLoading(false);
-	}
-};
+	};
 
 	useEffect(() => {
 		fetchTenders(currentPage);
@@ -83,18 +83,16 @@ const TendersList = () => {
 			</table>
 			{loading && <p>Loading...</p>}
 			<div>
-				<button
-					onClick={loadPreviousPage}
-					disabled={loading || pagination.currentPage <= 1}
-				>
-					Previous Page
-				</button>
-				<button
-					onClick={loadNextPage}
-					disabled={loading || pagination.currentPage >= pagination.totalPages}
-				>
-					Next Page
-				</button>
+				{pagination.currentPage > 1 && (
+					<button onClick={loadPreviousPage} disabled={loading}>
+						Previous Page
+					</button>
+				)}
+				{pagination.currentPage < pagination.totalPages && (
+					<button onClick={loadNextPage} disabled={loading}>
+						Next Page
+					</button>
+				)}
 			</div>
 		</div>
 	);

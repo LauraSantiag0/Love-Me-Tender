@@ -103,7 +103,7 @@ router.get("/bidder-bid", async (req, res) => {
 
 router.get("/tenders", async (req, res) => {
 	const page = parseInt(req.query.page, 10) || 1;
-	const limit = parseInt(req.query.limit, 10) || 25;
+	const limit = 25;
 	const offset = (page - 1) * limit;
 
 	const countSql = "SELECT COUNT(*) FROM tender";
@@ -121,19 +121,17 @@ router.get("/tenders", async (req, res) => {
 		const dataResult = await db.query(dataSql, [limit, offset]);
 		const tenders = dataResult.rows;
 
-	res.status(200).json({
-		resource: {
-			tenders,
+		res.status(200).json({
+			results: tenders,
 			pagination: {
 				itemsPerPage: limit,
 				currentPage: page,
 				totalPages,
 			},
-		},
-	});
-} catch (err) {
-	res.status(500).json({ code: "SERVER_ERROR" });
-}
+		});
+	} catch (err) {
+		res.status(500).json({ code: "SERVER_ERROR" });
+	}
 });
 
 export default router;
