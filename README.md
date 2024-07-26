@@ -56,7 +56,7 @@ node ../node_modules/db-migrate/bin/db-migrate create name-for-the-migration --s
 
 ```sh
 npm run build
-````
+```
 
 6. Run the code
 
