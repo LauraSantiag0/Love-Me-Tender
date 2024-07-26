@@ -12,7 +12,7 @@ Ensure the following are installed on your system before proceeding:
 
 This is our deployed website link https://love-me-tender-51qa.onrender.com
 
-To upload the project latest version on Render.com, follow the steps below;
+To upload the project's latest version follow the steps below;
 
 1. Go to render dashboard
 2. Click on Manual Deploy button
