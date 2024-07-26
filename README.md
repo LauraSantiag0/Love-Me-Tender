@@ -42,7 +42,7 @@ npm install
 
 4. To run the migrations, navigate to database folder and run
 
-```sh
+````sh
 node ../node_modules/db-migrate/bin/db-migrate up
 
 To modify the database, run the command below from the database folder, and add DB modifications in the generated ...-up.sql file
@@ -56,7 +56,7 @@ node ../node_modules/db-migrate/bin/db-migrate create name-for-the-migration --s
 
 ```sh
 npm run build
-```
+````
 
 6. Run the code
 
