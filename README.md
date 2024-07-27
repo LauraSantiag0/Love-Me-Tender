@@ -64,12 +64,14 @@ npm start
 
 ## DB CONNECTION:
 
+Connectiom command;
+
+```sh
 psql -h dpg-cqhc5vdds78s73bd159g-a.virginia-postgres.render.com -U cyf_tms_user -d cyf_tms
+```
 
-PASSWORD:
-s5WAaZQcQd4g6ElcUE6B0t4NXOmTNF00
+SQL command to add migration files to create or alter tables:
 
-SQL migration files to create the necessary tables:
-psql -h dpg-cqhc5vdds78s73bd159g-a.virginia-postgres.render.com -U cyf_tms_user -d cyf_tms -f /workspace/database/migrations/sqls/20240715163245-initial-db-up.sql
-
-psql -h dpg-cqhc5vdds78s73bd159g-a.virginia-postgres.render.com -U cyf_tms_user -d cyf_tms -f /workspace/database/migrations/sqls/20240723172844-attachments-table-and-modifications-to-tender-table-up.sql
+```sh
+psql -h dpg-cqhc5vdds78s73bd159g-a.virginia-postgres.render.com -U cyf_tms_user -d cyf_tms -f <migrationfilename>
+```
