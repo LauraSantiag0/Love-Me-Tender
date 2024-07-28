@@ -1,10 +1,10 @@
 {
 	"dev": {
 		"driver": "pg",
-		"user": "cyf_tms_user",
-		"password": "***********",
-		"host": "dpg-cqhc5vdds78s73bd159g-a.virginia-postgres.render.com",
-		"database": "cyf_tms",
-		"port": "5432"
+		"user": "${DB_USER}",
+		"password": "${DB_PASS}",
+		"host": "${DB_HOST}",
+		"database": "${DB_NAME}",
+		"port": "${DB_PORT}"
 	}
 }

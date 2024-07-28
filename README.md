@@ -61,17 +61,3 @@ npm run build
 ```sh
 npm start
 ```
-
-## DB CONNECTION:
-
-Connectiom command;
-
-```sh
-psql -h dpg-cqhc5vdds78s73bd159g-a.virginia-postgres.render.com -U cyf_tms_user -d cyf_tms
-```
-
-SQL command to add migration files to create or alter tables:
-
-```sh
-psql -h dpg-cqhc5vdds78s73bd159g-a.virginia-postgres.render.com -U cyf_tms_user -d cyf_tms -f <migrationfilename>
-```
