@@ -11,6 +11,9 @@ ADD COLUMN no_of_bids_received INT;
 ALTER TABLE tender
 ALTER COLUMN description TYPE VARCHAR(2000);
 
+ALTER TABLE tender
+ADD COLUMN closing_date DATE;
+
 
 CREATE TABLE bid (
     bid_id SERIAL PRIMARY KEY,
