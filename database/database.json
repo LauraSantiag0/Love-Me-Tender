@@ -9,10 +9,10 @@
 	},
 	"prod": {
 		"driver": "pg",
-		"host": "${DB_HOST}",
-		"user": "${DB_USER}",
-		"password": "${DB_PASS}",
-		"database": "${DB_NAME}",
-		"port": "${DB_PORT}"
+		"host": { "ENV": "DB_HOST" },
+		"user": { "ENV": "DB_USER" },
+		"password": { "ENV": "DB_PASS" },
+		"database": { "ENV": "DB_NAME" },
+		"port": { "ENV": "DB_PORT" }
 	}
 }
