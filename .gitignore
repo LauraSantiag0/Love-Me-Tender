@@ -3,4 +3,3 @@ dist/
 node_modules/
 .DS_Store
 .env
-database/migrations/sqls/cyf_tms_cjao_backup.backup
