@@ -16,7 +16,7 @@ const PublishTenderForm = () => {
 			try {
 				const response = await fetch("/api/skills");
 				const data = await response.json();
-				setSkills(data.skills);
+				setSkills(data.results);
 				setErrors([]);
 			} catch (error) {
 				setErrors(["Failed to fetch skills. Please try again later."]);
