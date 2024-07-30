@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const itemsPerPage = 25;
 const router = Router();
+const SALT = "a_random_phrase_here";
 
 router.get("/", (_, res) => {
 	res.status(200).json({ message: "WELCOME TO LOVE ME TENDER SITE" });
@@ -273,23 +274,25 @@ router.post("/sign-in", async (req, res) => {
 	}
 
 	try {
-		const userResult = await db.query("SELECT * FROM users WHERE email = $1", [
-			email,
-		]);
+		const hash = bcrypt.hashSync(password, SALT);
+		const userResult = await db.query(
+			"SELECT * FROM users WHERE email = $1 AND password_hash = $2",
+			[email, hash]
+		);
+
 		const user = userResult.rows[0];
 
 		if (!user) {
-			return res.status(401).json({ error: "Invalid email or password" });
-		}
-
-		const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-		if (!isPasswordValid) {
 			return res.status(401).json({});
 		}
 
 		const token = uuidv4();
 		const expirationDate = new Date();
 		expirationDate.setMonth(expirationDate.getMonth() + 1);
+
+		if (expirationDate.getDate() !== new Date().getDate()) {
+			expirationDate.setDate(0);
+		}
 
 		await db.query(
 			"INSERT INTO session (token, user_id, expiration_date) VALUES ($1, $2, $3)",
