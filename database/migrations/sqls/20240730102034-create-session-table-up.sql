@@ -3,4 +3,5 @@ CREATE TABLE session (
     user_id INT NOT NULL,
     expiration_date TIMESTAMP NOT NULL,
     PRIMARY KEY (token)
+    FOREIGN KEY (user_id) REFERENCES users(id) 
 );
