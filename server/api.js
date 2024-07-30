@@ -15,7 +15,7 @@ router.get("/skills", async (req, res) => {
 		const result = await db.query(
 			"SELECT skill_id, skill_name FROM skill ORDER BY skill_name ASC"
 		);
-		res.status(200).json({ resource: result.rows });
+		res.status(200).json({ results: result.rows });
 	} catch (error) {
 		res.status(500).json({ code: "SERVER_ERROR" });
 	}
