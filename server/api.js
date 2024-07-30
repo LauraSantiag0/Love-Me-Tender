@@ -1,5 +1,7 @@
 import { Router } from "express";
 import db, { pool } from "./db";
+import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
 
 const itemsPerPage = 25;
 const router = Router();
@@ -260,6 +262,43 @@ router.post("/bid/:bidId/status", async (req, res) => {
 		if (client) {
 			client.release();
 		}
+	}
+});
+
+router.post("/sign-in", async (req, res) => {
+	const { email, password } = req.body;
+
+	if (!email || !password) {
+		return res.status(400).json({});
+	}
+
+	try {
+		const userResult = await db.query("SELECT * FROM users WHERE email = $1", [
+			email,
+		]);
+		const user = userResult.rows[0];
+
+		if (!user) {
+			return res.status(401).json({ error: "Invalid email or password" });
+		}
+
+		const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+		if (!isPasswordValid) {
+			return res.status(401).json({});
+		}
+
+		const token = uuidv4();
+		const expirationDate = new Date();
+		expirationDate.setMonth(expirationDate.getMonth() + 1);
+
+		await db.query(
+			"INSERT INTO session (token, user_id, expiration_date) VALUES ($1, $2, $3)",
+			[token, user.id, expirationDate]
+		);
+
+		res.status(200).json({ resource: { token } });
+	} catch (error) {
+		res.status(500).json({ code: "SERVER_ERROR" });
 	}
 });
 
