@@ -17,7 +17,7 @@ router.get("/skills", async (req, res) => {
 		);
 		res.status(200).json({ resource: result.rows });
 	} catch (error) {
-		res.status(500).json({});
+		res.status(500).json({ code: "SERVER_ERROR" });
 	}
 });
 
@@ -63,9 +63,7 @@ router.post("/tender", async (req, res) => {
 	}
 
 	if (newErrors.length > 0) {
-		return res
-			.status(400)
-			.json({ code: "VALIDATION_ERROR", errors: newErrors });
+		return res.status(400).json({});
 	}
 
 	const client = await pool.connect();
