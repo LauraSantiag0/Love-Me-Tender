@@ -1,78 +1,62 @@
 import axios from "axios";
 
-class TenderClient {
-	constructor(baseURL, token) {
-		this.client = axios.create({
-			baseURL: baseURL,
-			headers: {
-				Authorization: `Bearer ${token}`,
-				"Content-Type": "application/json",
-			},
-		});
+const getToken = () => localStorage.getItem("authToken");
 
-		this.client.interceptors.response.use(
-			(response) => response,
-			(error) => {
-				console.error(
-					"API call error:",
-					error.response ? error.response.data : error.message
-				);
-				return Promise.reject(error);
-			}
-		);
+const createClient = () => {
+	const token = getToken();
+	return axios.create({
+		baseURL: "http://localhost:3000",
+		headers: {
+			Authorization: `Bearer ${token}`,
+			"Content-Type": "application/json",
+		},
+	});
+};
+
+const handleAuthError = (error) => {
+	if (error.response && error.response.status === 401) {
+		localStorage.removeItem("authToken");
+		window.location.href = "/sign-in";
 	}
+	throw error;
+};
 
-	async get(endpoint) {
-		try {
-			const response = await this.client.get(endpoint);
-			return response.data;
-		} catch (error) {
-			console.error(
-				"GET request error:",
-				error.response ? error.response.data : error.message
-			);
-			throw error;
-		}
+export const get = async (endpoint) => {
+	const client = createClient();
+	try {
+		const response = await client.get(endpoint);
+		return response.data;
+	} catch (error) {
+		handleAuthError(error);
 	}
+};
 
-	async post(endpoint, data) {
-		try {
-			const response = await this.client.post(endpoint, data);
-			return response.data;
-		} catch (error) {
-			console.error(
-				"POST request error:",
-				error.response ? error.response.data : error.message
-			);
-			throw error;
-		}
+export const post = async (endpoint, data) => {
+	const client = createClient();
+	try {
+		const response = await client.post(endpoint, data);
+		return response.data;
+	} catch (error) {
+		handleAuthError(error);
 	}
+};
 
-	async put(endpoint, data) {
-		try {
-			const response = await this.client.put(endpoint, data);
-			return response.data;
-		} catch (error) {
-			console.error(
-				"PUT request error:",
-				error.response ? error.response.data : error.message
-			);
-			throw error;
-		}
+export const put = async (endpoint, data) => {
+	const client = createClient();
+	try {
+		const response = await client.put(endpoint, data);
+		return response.data;
+	} catch (error) {
+		handleAuthError(error);
 	}
+};
 
-	async delete(endpoint) {
-		try {
-			const response = await this.client.delete(endpoint);
-			return response.data;
-		} catch (error) {
-			console.error(
-				"DELETE request error:",
-				error.response ? error.response.data : error.message
-			);
-			throw error;
-		}
+export const del = async (endpoint) => {
+	const client = createClient();
+	try {
+		const response = await client.delete(endpoint);
+		return response.data;
+	} catch (error) {
+		handleAuthError(error);
 	}
-}
-
-export default TenderClient;
+};
