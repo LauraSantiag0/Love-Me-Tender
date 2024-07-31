@@ -365,7 +365,7 @@ router.get("/tenders", async (req, res) => {
 
 	const countSql = "SELECT COUNT(*) FROM tender";
 	const dataSql = `
-		SELECT id, title, creation_date, announcement_date, deadline, status 
+		SELECT id, title, creation_date, announcement_date, deadline, description, status, no_of_bids_received
 		FROM tender 
 		ORDER BY creation_date DESC 
 		LIMIT $1 OFFSET $2

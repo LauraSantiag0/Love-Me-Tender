@@ -14,6 +14,7 @@ const TendersList = () => {
 		totalPages: 1,
 	});
 	const [error, setError] = useState(null);
+	const [expandedTenderId, setExpandedTenderId] = useState(null);
 	const navigate = useNavigate();
 
 	const fetchTenders = async (page) => {
@@ -50,6 +51,10 @@ const TendersList = () => {
 		}
 	};
 
+	const handleTenderClick = (id) => {
+		setExpandedTenderId((prevId) => (prevId === id ? null : id));
+	};
+
 	return (
 		<div className="tenders-container">
 			{error && <p className="error-message">{error}</p>}
@@ -61,18 +66,32 @@ const TendersList = () => {
 						<th>Tender Created Date</th>
 						<th>Tender Announcement Date</th>
 						<th>Tender Project Deadline Date</th>
+						<th>Description</th>
 						<th>Tender Status</th>
 					</tr>
 				</thead>
 				<tbody>
 					{tenders.map((tender) => (
 						<tr key={tender.id}>
-							<td>{tender.id}</td>
-							<td>{tender.title}</td>
+							<td>
+								<button onClick={() => handleTenderClick(tender.id)}>
+									{tender.id}
+								</button>
+							</td>
+							<td>
+								<button onClick={() => handleTenderClick(tender.id)}>
+									{tender.title}
+								</button>
+							</td>
 							<td>{new Date(tender.creation_date).toLocaleDateString()}</td>
 							<td>{new Date(tender.announcement_date).toLocaleDateString()}</td>
 							<td>{new Date(tender.deadline).toLocaleDateString()}</td>
 							<td data-status={tender.status}>{tender.status}</td>
+							<td>
+								{expandedTenderId === tender.id && (
+									<p>{tender.description || "No description available"}</p>
+								)}
+							</td>
 						</tr>
 					))}
 				</tbody>
