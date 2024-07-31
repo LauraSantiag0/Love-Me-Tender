@@ -63,7 +63,9 @@ router.post("/tender", async (req, res) => {
 	}
 
 	if (newErrors.length > 0) {
-		return res.status(400).json({});
+		return res
+			.status(400)
+			.json({ code: "VALIDATION_ERROR", errors: newErrors });
 	}
 
 	const client = await pool.connect();
