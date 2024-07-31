@@ -2,27 +2,31 @@ import axios from "axios";
 
 const getToken = () => localStorage.getItem("authToken");
 
-const createClient = () => {
+const client = axios.create({
+	baseURL: "http://localhost:3000",
+	headers: {
+		"Content-Type": "application/json",
+	},
+});
+
+client.interceptors.request.use((config) => {
 	const token = getToken();
-	return axios.create({
-		baseURL: "http://localhost:3000",
-		headers: {
-			Authorization: `Bearer ${token}`,
-			"Content-Type": "application/json",
-		},
-	});
-};
+	if (token) {
+		config.headers.Authorization = `Bearer ${token}`;
+	}
+	return config;
+});
 
 const handleAuthError = (error) => {
 	if (error.response && error.response.status === 401) {
 		localStorage.removeItem("authToken");
 		window.location.href = "/sign-in";
+	} else {
+		throw error;
 	}
-	throw error;
 };
 
 export const get = async (endpoint) => {
-	const client = createClient();
 	try {
 		const response = await client.get(endpoint);
 		return response.data;
@@ -32,7 +36,6 @@ export const get = async (endpoint) => {
 };
 
 export const post = async (endpoint, data) => {
-	const client = createClient();
 	try {
 		const response = await client.post(endpoint, data);
 		return response.data;
@@ -42,7 +45,6 @@ export const post = async (endpoint, data) => {
 };
 
 export const put = async (endpoint, data) => {
-	const client = createClient();
 	try {
 		const response = await client.put(endpoint, data);
 		return response.data;
@@ -52,7 +54,6 @@ export const put = async (endpoint, data) => {
 };
 
 export const del = async (endpoint) => {
-	const client = createClient();
 	try {
 		const response = await client.delete(endpoint);
 		return response.data;
