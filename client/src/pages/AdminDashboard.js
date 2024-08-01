@@ -4,7 +4,7 @@ import TendersList from "../TenderList";
 const AdminDashboard = () => {
 	return (
 		<main>
-			<h1>Admin Dashboard</h1>
+			<h1>Tenders</h1>
 			<TendersList />
 		</main>
 	);

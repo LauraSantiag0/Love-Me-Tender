@@ -1,15 +1,11 @@
 import React from "react";
 import TendersList from "../TenderList";
-import { Link } from "react-router-dom";
 
 export function BuyerDashboard() {
 	return (
 		<main role="main">
 			<div>
-				<h1>Buyer Dashboard</h1>
-				<Link to="/publish-tender">
-					<button>Publish Tender</button>
-				</Link>
+				<h1>Tenders</h1>
 				<TendersList />
 			</div>
 		</main>
