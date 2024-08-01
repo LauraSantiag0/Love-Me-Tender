@@ -372,26 +372,26 @@ router.post("/bid/:bidId/status", async (req, res) => {
 				[rejectStatus, tenderId, bidId]
 			);
 
-			if (awardBidResult.rowCount > 0 && rejectOtherBidsResult.rowCount >= 0) {
+			if (awardBidResult.rowCount > 0 || rejectOtherBidsResult.rowCount >= 0) {
 				await client.query("COMMIT");
 				return res.status(200).send({ code: "SUCCESS" });
 			} else {
 				await client.query("ROLLBACK");
 				return res.status(500).send({ code: "SERVER_ERROR" });
 			}
-		}
-
-		const updateBidResult = await client.query(
-			"UPDATE bid SET status = $1 WHERE bid_id = $2;",
-			[status, bidId]
-		);
-
-		if (updateBidResult.rowCount > 0) {
-			await client.query("COMMIT");
-			return res.status(200).send({ code: "SUCCESS" });
 		} else {
-			await client.query("ROLLBACK");
-			return res.status(500).send({ code: "SERVER_ERROR" });
+			const updateBidResult = await client.query(
+				"UPDATE bid SET status = $1 WHERE bid_id = $2;",
+				[status, bidId]
+			);
+
+			if (updateBidResult.rowCount > 0) {
+				await client.query("COMMIT");
+				return res.status(200).send({ code: "SUCCESS" });
+			} else {
+				await client.query("ROLLBACK");
+				return res.status(500).send({ code: "SERVER_ERROR" });
+			}
 		}
 	} catch (error) {
 		if (client) {
