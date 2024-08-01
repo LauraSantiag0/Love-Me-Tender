@@ -1,13 +1,11 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import TendersList from "../TenderList";
 
 const BidderDashboard = () => {
 	return (
 		<main>
 			<h1>Bidder Dashboard</h1>
-			<Link to="/list-tenders">
-				<button>View Tenders</button>
-			</Link>
+			<TendersList />
 		</main>
 	);
 };

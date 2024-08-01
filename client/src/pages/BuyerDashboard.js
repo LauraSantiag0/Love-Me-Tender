@@ -1,4 +1,5 @@
 import React from "react";
+import TendersList from "../TenderList";
 import { Link } from "react-router-dom";
 
 export function BuyerDashboard() {
@@ -9,9 +10,7 @@ export function BuyerDashboard() {
 				<Link to="/publish-tender">
 					<button>Publish Tender</button>
 				</Link>
-				<Link to="/list-tenders">
-					<button>View Tenders</button>
-				</Link>
+				<TendersList />
 			</div>
 		</main>
 	);
