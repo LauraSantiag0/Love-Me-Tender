@@ -67,11 +67,8 @@ const auth = async (req, res, next) => {
 			return next();
 		}
 
-		if (method === "POST" && path === "/tender") {
-			if (user.role === "buyer") {
-				return next();
-			}
-			return res.status(403).json({ code: "FORBIDDEN" });
+		if (allowedAccess === user.role) {
+			return next();
 		}
 
 		return res.status(403).json({ code: "FORBIDDEN" });
