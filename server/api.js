@@ -6,70 +6,78 @@ import { v4 as uuidv4 } from "uuid";
 const itemsPerPage = 25;
 const router = Router();
 
+const allowlist = {
+	POST: {
+		"/sign-in": "public",
+		"/tender": "token",
+	},
+	GET: {
+		"/skills": "token",
+		"/buyer-tender": "token",
+		"/bidder-bid": "token",
+		"/tenders": "token",
+	},
+};
+
 const auth = async (req, res, next) => {
 	try {
 		const method = req.method.toUpperCase();
 		const path = req.path;
 
-		if (method === "POST" && path === "/sign-in") {
+		const allowedAccess = allowlist[method] && allowlist[method][path];
+
+		if (allowedAccess === "public") {
 			return next();
 		}
 
-		const authHeader = req.headers.authorization;
-		const token = authHeader?.split(" ")[1];
+		if (allowedAccess === "token") {
+			const authHeader = req.headers.authorization;
+			const token = authHeader?.split(" ")[1];
 
-		if (!token) {
-			return res.status(401).json({ code: "UNAUTHRIZED" });
-		}
+			if (!token) {
+				return res.status(401).json({ code: "UNAUTHRIZED" });
+			}
 
-		const sessionResult = await db.query(
-			"SELECT * FROM session WHERE token = $1",
-			[token]
-		);
-		const session = sessionResult.rows[0];
+			const sessionResult = await db.query(
+				"SELECT * FROM session WHERE token = $1",
+				[token]
+			);
+			const session = sessionResult.rows[0];
 
-		if (!session) {
-			return res.status(401).json({ code: "UNAUTHRIZED" });
-		}
+			if (!session) {
+				return res.status(401).json({ code: "UNAUTHRIZED" });
+			}
 
-		const currentTime = new Date();
-		if (session.expires_at <= currentTime) {
-			return res.status(401).json({ code: "EXPIRED_SESSION" });
-		}
+			const currentTime = new Date();
+			if (session.expires_at <= currentTime) {
+				return res.status(401).json({ code: "EXPIRED_SESSION" });
+			}
 
-		const userResult = await db.query("SELECT * FROM users WHERE id = $1", [
-			session.user_id,
-		]);
-		const user = userResult.rows[0];
+			const userResult = await db.query("SELECT * FROM users WHERE id = $1", [
+				session.user_id,
+			]);
+			const user = userResult.rows[0];
 
-		if (!user) {
-			return res.status(500).json({ code: "SERVER_ERROR" });
-		}
+			if (!user) {
+				return res.status(500).json({ code: "SERVER_ERROR" });
+			}
 
-		req.user = user;
+			req.user = user;
 
-		if (user.role === "admin") {
+			if (user.role === "admin") {
+				return next();
+			}
+
+			if (method === "POST" && path === "/tender") {
+				if (user.role === "buyer") {
+					return next();
+				}
+				return res.status(403).json({ code: "FORBIDDEN" });
+			}
+
 			return next();
 		}
 
-		if (method === "POST" && path === "/tender") {
-			if (user.role === "buyer") {
-				return next();
-			}
-			return res.status(403).json({ code: "FORBIDDEN" });
-		}
-
-		if (method === "GET") {
-			const publicPaths = [
-				"/skills",
-				"/buyer-tender",
-				"/bidder-bid",
-				"/tenders",
-			];
-			if (publicPaths.includes(path)) {
-				return next();
-			}
-		}
 		return res.status(403).json({ code: "FORBIDDEN" });
 	} catch (error) {
 		res.status(500).json({ code: "SERVER_ERROR" });
