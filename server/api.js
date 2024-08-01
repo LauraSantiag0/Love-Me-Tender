@@ -6,16 +6,12 @@ import { v4 as uuidv4 } from "uuid";
 const itemsPerPage = 25;
 const router = Router();
 
-const allowlist = {
-	POST: ["/sign-in"],
-};
-
 const auth = async (req, res, next) => {
 	try {
 		const method = req.method.toUpperCase();
 		const path = req.path;
 
-		if (allowlist[method] && allowlist[method].includes(path)) {
+		if (method === "POST" && path === "/sign-in") {
 			return next();
 		}
 
@@ -51,7 +47,30 @@ const auth = async (req, res, next) => {
 		}
 
 		req.user = user;
-		next();
+
+		if (user.role === "admin") {
+			return next();
+		}
+
+		if (method === "POST" && path === "/tender") {
+			if (user.role === "buyer") {
+				return next();
+			}
+			return res.status(403).json({ code: "FORBIDDEN" });
+		}
+
+		if (method === "GET") {
+			const publicPaths = [
+				"/skills",
+				"/buyer-tender",
+				"/bidder-bid",
+				"/tenders",
+			];
+			if (publicPaths.includes(path)) {
+				return next();
+			}
+		}
+		return res.status(403).json({ code: "FORBIDDEN" });
 	} catch (error) {
 		res.status(500).json({ code: "SERVER_ERROR" });
 	}
