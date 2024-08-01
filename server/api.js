@@ -9,7 +9,7 @@ const router = Router();
 const allowlist = {
 	POST: {
 		"/sign-in": "public",
-		"/tender": "token",
+		"/tender": "buyer",
 	},
 	GET: {
 		"/skills": "token",
@@ -30,52 +30,48 @@ const auth = async (req, res, next) => {
 			return next();
 		}
 
-		if (allowedAccess === "token") {
-			const authHeader = req.headers.authorization;
-			const token = authHeader?.split(" ")[1];
+		const authHeader = req.headers.authorization;
+		const token = authHeader?.split(" ")[1];
 
-			if (!token) {
-				return res.status(401).json({ code: "UNAUTHRIZED" });
-			}
+		if (!token) {
+			return res.status(401).json({ code: "UNAUTHRIZED" });
+		}
 
-			const sessionResult = await db.query(
-				"SELECT * FROM session WHERE token = $1",
-				[token]
-			);
-			const session = sessionResult.rows[0];
+		const sessionResult = await db.query(
+			"SELECT * FROM session WHERE token = $1",
+			[token]
+		);
+		const session = sessionResult.rows[0];
 
-			if (!session) {
-				return res.status(401).json({ code: "UNAUTHRIZED" });
-			}
+		if (!session) {
+			return res.status(401).json({ code: "UNAUTHRIZED" });
+		}
 
-			const currentTime = new Date();
-			if (session.expires_at <= currentTime) {
-				return res.status(401).json({ code: "EXPIRED_SESSION" });
-			}
+		const currentTime = new Date();
+		if (session.expires_at <= currentTime) {
+			return res.status(401).json({ code: "EXPIRED_SESSION" });
+		}
 
-			const userResult = await db.query("SELECT * FROM users WHERE id = $1", [
-				session.user_id,
-			]);
-			const user = userResult.rows[0];
+		const userResult = await db.query("SELECT * FROM users WHERE id = $1", [
+			session.user_id,
+		]);
+		const user = userResult.rows[0];
 
-			if (!user) {
-				return res.status(500).json({ code: "SERVER_ERROR" });
-			}
+		if (!user) {
+			return res.status(500).json({ code: "SERVER_ERROR" });
+		}
 
-			req.user = user;
+		req.user = user;
 
-			if (user.role === "admin") {
+		if (user.role === "admin") {
+			return next();
+		}
+
+		if (method === "POST" && path === "/tender") {
+			if (user.role === "buyer") {
 				return next();
 			}
-
-			if (method === "POST" && path === "/tender") {
-				if (user.role === "buyer") {
-					return next();
-				}
-				return res.status(403).json({ code: "FORBIDDEN" });
-			}
-
-			return next();
+			return res.status(403).json({ code: "FORBIDDEN" });
 		}
 
 		return res.status(403).json({ code: "FORBIDDEN" });
