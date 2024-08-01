@@ -38,6 +38,8 @@ function LogInForm() {
 				default:
 					navigate("/bidder-dashboard");
 			}
+
+			navigate("/list-tenders");
 		} catch (error) {
 			switch (error.status) {
 				case 401:

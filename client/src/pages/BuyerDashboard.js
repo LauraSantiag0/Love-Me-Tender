@@ -9,6 +9,9 @@ export function BuyerDashboard() {
 				<Link to="/publish-tender">
 					<button>Publish Tender</button>
 				</Link>
+				<Link to="/list-tenders">
+					<button>View Tenders</button>
+				</Link>
 			</div>
 		</main>
 	);
