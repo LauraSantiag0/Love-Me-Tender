@@ -24,8 +24,10 @@ const auth = async (req, res, next) => {
 	try {
 		const method = req.method.toUpperCase();
 		const path = req.path;
+		const firstPathSegment = path.split("/")[1];
 
-		const allowedAccess = allowlist[method] && allowlist[method][path];
+		const allowedAccess =
+			allowlist[method] && allowlist[method][[`/${firstPathSegment}`]];
 
 		if (allowedAccess === "public") {
 			return next();
@@ -69,10 +71,6 @@ const auth = async (req, res, next) => {
 		}
 
 		if (allowedAccess === user.role) {
-			return next();
-		}
-
-		if (allowedAccess === user.token) {
 			return next();
 		}
 
@@ -343,7 +341,7 @@ router.post("/bid/:bidId/status", async (req, res) => {
 
 		if (tenderResult.rowCount === 0) {
 			await client.query("ROLLBACK");
-			return res.status(404).send({ code: "TENDER_NOT_FOUND" });
+			return res.status(500).send({ code: "SERVER_ERROR" });
 		}
 
 		const buyerId = tenderResult.rows[0].buyer_id;
@@ -359,6 +357,28 @@ router.post("/bid/:bidId/status", async (req, res) => {
 		if (status === "Withdraw" && user.id !== bidderId) {
 			await client.query("ROLLBACK");
 			return res.status(403).send({ code: "FORBIDDEN" });
+		}
+
+		if (status === "Awarded") {
+			const rejectStatus = "Rejected";
+
+			const awardBidResult = await client.query(
+				"UPDATE bid SET status = $1 WHERE bid_id = $2;",
+				[status, bidId]
+			);
+
+			const rejectOtherBidsResult = await client.query(
+				"UPDATE bid SET status = $1 WHERE tender_id = $2 AND bid_id != $3;",
+				[rejectStatus, tenderId, bidId]
+			);
+
+			if (awardBidResult.rowCount > 0 && rejectOtherBidsResult.rowCount >= 0) {
+				await client.query("COMMIT");
+				return res.status(200).send({ code: "SUCCESS" });
+			} else {
+				await client.query("ROLLBACK");
+				return res.status(500).send({ code: "SERVER_ERROR" });
+			}
 		}
 
 		const updateBidResult = await client.query(
