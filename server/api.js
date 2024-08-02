@@ -432,18 +432,14 @@ router.get("/bid", async (req, res) => {
 		const totalPages = Math.ceil(totalBidsResult.rows[0].count / itemsPerPage);
 		const bidsResult = await db.query(bidsQuery, bidsParams);
 
-		if (bidsResult) {
-			res.send({
-				results: bidsResult.rows,
-				pagination: {
-					itemsPerPage: itemsPerPage,
-					currentPage: page,
-					totalPages: totalPages,
-				},
-			});
-		} else {
-			res.status(500).send({ code: "SERVER_ERROR" });
-		}
+		res.send({
+			results: bidsResult.rows,
+			pagination: {
+				itemsPerPage: itemsPerPage,
+				currentPage: page,
+				totalPages: totalPages,
+			},
+		});
 	} catch (error) {
 		res.status(500).json({ code: "SERVER_ERROR" });
 	}
