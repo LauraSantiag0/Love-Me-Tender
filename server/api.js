@@ -393,10 +393,11 @@ router.get("/tenders", async (req, res) => {
 router.get("/bid", async (req, res) => {
 	try {
 		const userId = req.user.id;
-		const userRole = req.user.role;
+		const userRole = req.user.user_type;
 		const tenderID = parseInt(req.query.tender_id);
 		let page = parseInt(req.query.page) || 1;
 		const itemsPerPage = 10;
+		const offset = (page - 1) * itemsPerPage;
 		let totalBidsQuery;
 		let totalBidsParams;
 		let bidsQuery;
@@ -429,7 +430,6 @@ router.get("/bid", async (req, res) => {
 
 		const totalBidsResult = await db.query(totalBidsQuery, totalBidsParams);
 		const totalPages = Math.ceil(totalBidsResult.rows[0].count / itemsPerPage);
-		const offset = (page - 1) * itemsPerPage;
 		const bidsResult = await db.query(bidsQuery, bidsParams);
 
 		if (bidsResult) {
