@@ -72,7 +72,7 @@ const auth = async (req, res, next) => {
 			return next();
 		}
 
-		if (user.user_type === "buyer" && allowedAccess === "buyer") {
+		if (user.user_type === allowedAccess) {
 			return next();
 		}
 
