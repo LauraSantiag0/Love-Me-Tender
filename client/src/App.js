@@ -19,7 +19,6 @@ const App = () => (
 			<Route path="/BidderBiddingList" element={<BidderBiddingList />} />
 			<Route path="/signup" element={<SignUp />} />
 			<Route path="/dashboard" element={<Dashboard />} />
-			<Route path="/dashboard" element={<TendersList />} />
 			<Route path="/dashboard/page/:pageNumber" element={<TendersList />} />
 		</Routes>
 		<Footer className="footer" />
