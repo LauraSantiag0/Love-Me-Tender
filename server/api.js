@@ -333,6 +333,7 @@ router.get("/buyer-tender", async (req, res) => {
 router.get("/bidder-bid", async (req, res) => {
 	const bidderId = req.user.id;
 	const page = parseInt(req.query.page) || 1;
+	const itemsPerPage = 25;
 	const offset = (page - 1) * itemsPerPage;
 
 	const totalBiddings = await db.query(
@@ -586,6 +587,17 @@ router.post("/bid", async (req, res) => {
 
 		try {
 			await client.query("BEGIN");
+
+			const checkBidQuery = `
+				SELECT * FROM bid WHERE tender_id = $1 AND bidder_id = $2
+			`;
+			const checkBidValues = [tenderId, bidderId];
+			const existingBid = await client.query(checkBidQuery, checkBidValues);
+
+			if (existingBid.rows.length > 0) {
+				await client.query("ROLLBACK");
+				return res.status(400).json({});
+			}
 
 			const bidQuery = `
 				INSERT INTO bid (tender_id, bidder_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
