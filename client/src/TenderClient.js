@@ -22,7 +22,7 @@ const handleAuthError = (error) => {
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("userType");
 		if (window.location.href !== "/") {
-			window.location.href !== "/";
+			window.location.href === "/";
 		}
 	} else {
 		throw error;
