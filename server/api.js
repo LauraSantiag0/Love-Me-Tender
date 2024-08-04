@@ -2,6 +2,13 @@ import { Router } from "express";
 import db, { pool } from "./db";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
+import multer from "multer";
+
+const storage = multer.memoryStorage();
+const upload = multer({
+	storage: storage,
+	limits: { fileSize: 2 * 1024 * 1024 },
+});
 
 const itemsPerPage = 25;
 const router = Router();
@@ -544,6 +551,61 @@ router.post("/bid/:bidId/status", async (req, res) => {
 		if (client) {
 			client.release();
 		}
+	}
+});
+
+router.post("/bid", upload.single("document"), async (req, res) => {
+	try {
+		const { tenderId, bidding_amount, cover_letter, suggested_duration_days } =
+			req.body;
+		const { originalname } = req.file;
+		const bidderId = req.user.id;
+		const biddingDate = new Date();
+		const status = "Pending";
+
+		const client = await pool.connect();
+
+		try {
+			await client.query("BEGIN");
+
+			const bidQuery = `
+				INSERT INTO bid (tender_id, bidder_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
+				VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING bid_id
+			`;
+
+			const bidValues = [
+				tenderId,
+				bidderId,
+				biddingDate,
+				status,
+				bidding_amount,
+				cover_letter,
+				suggested_duration_days,
+			];
+
+			const bidResult = await client.query(bidQuery, bidValues);
+			const bidId = bidResult.rows[0].bid_id;
+
+			const attachmentQuery = `
+				INSERT INTO bid_attachment (bid_id, attachment)
+				VALUES ($1, $2)
+			`;
+
+			const attachmentValues = [bidId, originalname];
+
+			await client.query(attachmentQuery, attachmentValues);
+
+			await client.query("COMMIT");
+
+			res.status(201).json({ resource: "Bid successfully submitted!" });
+		} catch (error) {
+			await client.query("ROLLBACK");
+			res.status(500).json({ code: "SERVER_ERROR" });
+		} finally {
+			client.release();
+		}
+	} catch (error) {
+		res.status(500).json({ code: "SERVER_ERROR" });
 	}
 });
 
