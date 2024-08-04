@@ -561,6 +561,26 @@ router.post("/bid", async (req, res) => {
 			return res.status(400).json({ error: "Invalid bid status" });
 		}
 
+		if (cover_letter && cover_letter.length > 1000) {
+			return res
+				.status(400)
+				.json({ error: "Maximum length is upto 1,000 characters" });
+		}
+
+		if (
+			!suggested_duration_days ||
+			suggested_duration_days < 1 ||
+			suggested_duration_days > 1000
+		) {
+			return res
+				.status(400)
+				.json({ error: "Duration must be between 1 and 1,000 days" });
+		}
+
+		if (!bidding_amount || isNaN(bidding_amount) || bidding_amount <= 0) {
+			return res.status(400).json({ error: "Input a valid amount" });
+		}
+
 		const client = await pool.connect();
 
 		try {
@@ -577,23 +597,16 @@ router.post("/bid", async (req, res) => {
 				biddingDate,
 				status,
 				bidding_amount,
-				cover_letter,
+				cover_letter || null,
 				suggested_duration_days,
 			];
 
 			const bidResult = await client.query(bidQuery, bidValues);
-			const bidId = bidResult.rows[0].bid_id;
 
 			await client.query("COMMIT");
 
 			res.status(201).json({
-				resource: {
-					bidId,
-					status,
-					coverLetter: cover_letter || null,
-					projectDuration: suggested_duration_days,
-					projectBudget: bidding_amount,
-				},
+				resource: bidResult.rows[0],
 			});
 		} catch (error) {
 			await client.query("ROLLBACK");
