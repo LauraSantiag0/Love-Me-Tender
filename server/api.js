@@ -386,13 +386,12 @@ router.get("/tenders", async (req, res) => {
 		LIMIT $1 OFFSET $2
 	`;
 	const bidSql = `
-		SELECT * FROM bid
-		WHERE tender_id = ANY(
-		SELECT id FROM tender
-		ORDER BY creation_date DESC
-		LIMIT $1 OFFSET $2
-		)
-	`;
+    SELECT bid.*
+    FROM bid
+    JOIN tender ON bid.tender_id = tender.id
+    ORDER BY tender.creation_date DESC
+    LIMIT $1 OFFSET $2
+`;
 
 	try {
 		const countResult = await db.query(countSql);
@@ -449,8 +448,10 @@ router.get("/tenders/:id", async (req, res) => {
 		}
 
 		const bidsResult = await db.query(
-			`SELECT bid_id, tender_id, bidding_amount, status, suggested_duration_days
-             FROM bid WHERE tender_id = $1`,
+			`SELECT bid.bid_id, bid.tender_id, bid.bidding_amount, bid.status, bid.suggested_duration_days
+     FROM bid
+     JOIN tender ON bid.tender_id = tender.id
+     WHERE tender.id = $1`,
 			[tenderId]
 		);
 

@@ -25,14 +25,10 @@ const TendersList = () => {
 			const tenderData = await get(`/api/tenders?page=${page}`);
 			const bidsData = await get("/api/bidder-bid?page=1");
 
-			if (tenderData && bidsData) {
-				setTenders(tenderData.results);
-				setBids(bidsData.results);
-				setPagination(tenderData.pagination);
-				setError(null);
-			} else {
-				throw new Error("Server error");
-			}
+			setTenders(tenderData.results);
+			setBids(bidsData.results);
+			setPagination(tenderData.pagination);
+			setError(null);
 		} catch (error) {
 			setError("Error fetching tenders: " + error.message);
 		} finally {

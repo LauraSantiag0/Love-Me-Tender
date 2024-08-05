@@ -16,11 +16,7 @@ const SubmitBidForm = () => {
 		const fetchTender = async () => {
 			try {
 				const response = await get(`/api/tenders/${tenderId}`);
-				if (response) {
-					setTender(response.resource);
-				} else {
-					setErrors(["Failed to fetch tender details."]);
-				}
+				setTender(response.resource);
 			} catch (error) {
 				setErrors(["An error occurred while fetching tender details."]);
 			}
