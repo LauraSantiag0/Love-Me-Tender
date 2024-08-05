@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { post } from "./TenderClient";
+import { get, post } from "./TenderClient";
 
 const SubmitBidForm = () => {
 	const { tenderId } = useParams();
@@ -8,7 +8,26 @@ const SubmitBidForm = () => {
 	const [proposedDuration, setProposedDuration] = useState("");
 	const [proposedBudget, setProposedBudget] = useState("");
 	const [errors, setErrors] = useState([]);
+	const [bidError, setBidError] = useState("");
+	const [tender, setTender] = useState(null);
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		const fetchTender = async () => {
+			try {
+				const response = await get(`/api/tenders/${tenderId}`);
+				if (response) {
+					setTender(response.resource);
+				} else {
+					setErrors(["Failed to fetch tender details."]);
+				}
+			} catch (error) {
+				setErrors(["An error occurred while fetching tender details."]);
+			}
+		};
+
+		fetchTender();
+	}, [tenderId]);
 
 	const handleCoverLetterChange = (e) => {
 		setCoverLetter(e.target.value);
@@ -51,6 +70,7 @@ const SubmitBidForm = () => {
 					bidding_amount: budget,
 					cover_letter: coverLetter,
 					suggested_duration_days: duration,
+					bidding_date: new Date(),
 				};
 
 				await post("/api/bid", bidData);
@@ -59,13 +79,52 @@ const SubmitBidForm = () => {
 				alert("Bid submitted successfully!");
 				navigate("/dashboard");
 			} catch (error) {
-				setErrors([error.message]);
+				const { status, data } = error.response;
+				if (status === 400) {
+					setBidError("Validation error");
+					setErrors(data.error);
+				} else {
+					setBidError("Servor error");
+					setErrors(data.error);
+				}
 			}
 		}
 	};
 
 	return (
 		<div className="submit-bid-form-container">
+			{tender ? (
+				<div className="tender-info">
+					<h3>Tender Information</h3>
+					<p>
+						<strong>Title:</strong> {tender.title}
+					</p>
+					<p>
+						<strong>Description:</strong> {tender.description}
+					</p>
+					<p>
+						<strong>Creation Date:</strong>{" "}
+						{new Date(tender.creation_date).toLocaleDateString()}
+					</p>
+					<p>
+						<strong>Closing Date:</strong>{" "}
+						{new Date(tender.closing_date).toLocaleDateString()}
+					</p>
+					<p>
+						<strong>Announcement Date:</strong>{" "}
+						{new Date(tender.announcement_date).toLocaleDateString()}
+					</p>
+					<p>
+						<strong>Deadline:</strong>{" "}
+						{new Date(tender.deadline).toLocaleDateString()}
+					</p>
+					<p>
+						<strong>Status:</strong> {tender.status}
+					</p>
+				</div>
+			) : (
+				<p>Loading tender details...</p>
+			)}
 			<h2>Submit Bid</h2>
 			{errors.length > 0 && (
 				<div className="error-message">
@@ -83,7 +142,6 @@ const SubmitBidForm = () => {
 						id="coverLetter"
 						value={coverLetter}
 						onChange={handleCoverLetterChange}
-						maxLength="1000"
 					></textarea>
 				</div>
 				<div className="form-group">
@@ -95,8 +153,6 @@ const SubmitBidForm = () => {
 						id="proposedDuration"
 						value={proposedDuration}
 						onChange={handleProposedDurationChange}
-						min="1"
-						max="1000"
 						required
 					/>
 				</div>
@@ -107,13 +163,21 @@ const SubmitBidForm = () => {
 						id="proposedBudget"
 						value={proposedBudget}
 						onChange={handleProposedBudgetChange}
-						min="0.01"
-						step="0.01"
 						required
 					/>
 				</div>
 				<button type="submit">Submit Bid</button>
 			</form>
+			{bidError && (
+				<div className="message">
+					<p>{bidError}</p>
+					<ul className="error-list">
+						{errors.map((error, index) => (
+							<li key={index}>{error}</li>
+						))}
+					</ul>
+				</div>
+			)}
 		</div>
 	);
 };

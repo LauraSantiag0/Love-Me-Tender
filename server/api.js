@@ -332,31 +332,41 @@ router.get("/buyer-tender", async (req, res) => {
 
 router.get("/bidder-bid", async (req, res) => {
 	const bidderId = req.user.id;
-	const page = parseInt(req.query.page) || 1;
-	const itemsPerPage = 25;
+	const page = parseInt(req.query.page, 10) || 1;
 	const offset = (page - 1) * itemsPerPage;
 
-	const totalBiddings = await db.query(
-		"SELECT COUNT(bidder_id) FROM bid WHERE bidder_id = $1",
-		[bidderId]
-	);
-	const totalPages = Math.ceil(totalBiddings.rows[0].count / itemsPerPage);
+	try {
+		const countResult = await db.query(
+			"SELECT COUNT(*) FROM bid WHERE bidder_id = $1",
+			[bidderId]
+		);
+		const totalItems = parseInt(countResult.rows[0].count, 10);
+		const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-	const result = await db.query(
-		"SELECT * FROM bid WHERE bidder_id = $1 LIMIT $2 OFFSET $3",
-		[bidderId, itemsPerPage, offset]
-	);
+		const bidsResult = await db.query(
+			`
+			SELECT b.bid_id, b.tender_id, b.bidding_amount, b.status, b.bidding_date AS submission_date, b.suggested_duration_days, t.title
+			FROM bid b
+			JOIN tender t ON b.tender_id = t.id
+			WHERE b.bidder_id = $1
+			ORDER BY b.bidding_date DESC
+			LIMIT $2 OFFSET $3
+			`,
+			[bidderId, itemsPerPage, offset]
+		);
+		const bids = bidsResult.rows;
 
-	result
-		? res.send({
-				results: result.rows,
-				pagination: {
-					itemsPerPage: itemsPerPage,
-					currentPage: page,
-					totalPages: totalPages,
-				},
-		  })
-		: res.status(500).send({ code: "SERVER_ERROR" });
+		res.status(200).json({
+			results: bids,
+			pagination: {
+				itemsPerPage,
+				currentPage: page,
+				totalPages,
+			},
+		});
+	} catch (error) {
+		res.status(500).json({ code: "SERVER_ERROR" });
+	}
 });
 
 router.get("/tenders", async (req, res) => {
@@ -366,11 +376,24 @@ router.get("/tenders", async (req, res) => {
 
 	const countSql = "SELECT COUNT(*) FROM tender";
 	const dataSql = `
+<<<<<<< HEAD
 		SELECT id, title, creation_date, announcement_date, deadline, description, status
+=======
+		SELECT id, title, creation_date, announcement_date, deadline, description, status, closing_date
+>>>>>>> dac0645 (fix code acoording to feedback)
 		FROM tender 
 		ORDER BY creation_date DESC 
 		LIMIT $1 OFFSET $2
 	`;
+	const bidSql = `
+		SELECT * FROM bid
+		WHERE tender_id = ANY(
+		SELECT id FROM tender
+		ORDER BY creation_date DESC
+		LIMIT $1 OFFSET $2
+		)
+	`;
+
 	try {
 		const countResult = await db.query(countSql);
 		const totalItems = parseInt(countResult.rows[0].count, 10);
@@ -379,8 +402,23 @@ router.get("/tenders", async (req, res) => {
 		const dataResult = await db.query(dataSql, [limit, offset]);
 		const tenders = dataResult.rows;
 
+		const bidsResult = await db.query(bidSql, [limit, offset]);
+
+		const bidsByTenderId = bidsResult.rows.reduce((acc, bid) => {
+			if (!acc[bid.tender_id]) {
+				acc[bid.tender_id] = [];
+			}
+			acc[bid.tender_id].push(bid);
+			return acc;
+		}, {});
+
+		const tendersWithBids = tenders.map((tender) => ({
+			...tender,
+			bids: bidsByTenderId[tender.id] || [],
+		}));
+
 		res.status(200).json({
-			results: tenders,
+			results: tendersWithBids,
 			pagination: {
 				itemsPerPage: limit,
 				currentPage: page,
@@ -388,6 +426,39 @@ router.get("/tenders", async (req, res) => {
 			},
 		});
 	} catch (err) {
+		res.status(500).json({ code: "SERVER_ERROR" });
+	}
+});
+
+router.get("/tenders/:id", async (req, res) => {
+	const tenderId = parseInt(req.params.id, 10);
+
+	if (isNaN(tenderId)) {
+		return res.status(400).json({});
+	}
+
+	try {
+		const tenderResult = await db.query(
+			`SELECT id, title, creation_date, announcement_date, deadline, description, status, closing_date
+             FROM tender WHERE id = $1`,
+			[tenderId]
+		);
+
+		if (tenderResult.rows.length === 0) {
+			return res.status(404).json({});
+		}
+
+		const bidsResult = await db.query(
+			`SELECT bid_id, tender_id, bidding_amount, status, suggested_duration_days
+             FROM bid WHERE tender_id = $1`,
+			[tenderId]
+		);
+
+		const tender = tenderResult.rows[0];
+		tender.bids = bidsResult.rows;
+
+		res.status(200).json({ resource: tender });
+	} catch (error) {
 		res.status(500).json({ code: "SERVER_ERROR" });
 	}
 });
@@ -596,7 +667,7 @@ router.post("/bid", async (req, res) => {
 
 			if (existingBid.rows.length > 0) {
 				await client.query("ROLLBACK");
-				return res.status(400).json({});
+				return res.status(400).json({ code: "DUPLICATE_ENTRY" });
 			}
 
 			const bidQuery = `
