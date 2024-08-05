@@ -18,7 +18,6 @@ const BidderBiddingList = () => {
 		};
 		fetchBidderBids();
 	}, []);
-	console.log(bidderList);
 
 	if (errorMsg !== null) {
 		return <div>{errorMsg}</div>;
