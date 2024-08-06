@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { get, post } from "./TenderClient";
+import "./SubmitBidForm.css";
 
 const SubmitBidForm = () => {
 	const { tenderId } = useParams();
 	const [coverLetter, setCoverLetter] = useState("");
 	const [proposedDuration, setProposedDuration] = useState("");
 	const [proposedBudget, setProposedBudget] = useState("");
-	const [errors, setErrors] = useState([]);
-	const [bidError, setBidError] = useState("");
+	const [registerStatus, setRegisterStatus] = useState("");
+	const [validationErrors, setValidationErrors] = useState([]);
 	const [tender, setTender] = useState(null);
 	const navigate = useNavigate();
 
@@ -18,7 +19,9 @@ const SubmitBidForm = () => {
 				const response = await get(`/api/tenders/${tenderId}`);
 				setTender(response.resource);
 			} catch (error) {
-				setErrors(["An error occurred while fetching tender details."]);
+				setValidationErrors([
+					"An error occurred while fetching tender details.",
+				]);
 			}
 		};
 
@@ -39,56 +42,36 @@ const SubmitBidForm = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		const newErrors = [];
-
-		if (coverLetter.length > 1000) {
-			newErrors.push("Cover Letter must be up to 1,000 characters.");
-		}
 
 		const duration = parseInt(proposedDuration);
-		if (isNaN(duration) || duration < 1 || duration > 1000) {
-			newErrors.push(
-				"Proposed Project Duration must be between 1 and 1,000 days."
-			);
-		}
-
 		const budget = parseFloat(proposedBudget);
-		if (isNaN(budget) || budget <= 0) {
-			newErrors.push("Proposed Project Budget must be a positive number.");
-		}
+		try {
+			const bidData = {
+				tenderId,
+				bidding_amount: budget,
+				cover_letter: coverLetter,
+				suggested_duration_days: duration,
+				bidding_date: new Date(),
+			};
 
-		if (newErrors.length > 0) {
-			setErrors(newErrors);
-		} else {
-			try {
-				const bidData = {
-					tenderId,
-					bidding_amount: budget,
-					cover_letter: coverLetter,
-					suggested_duration_days: duration,
-					bidding_date: new Date(),
-				};
+			await post("/api/bid", bidData);
 
-				await post("/api/bid", bidData);
-
-				setErrors([]);
-				alert("Bid submitted successfully!");
-				navigate("/dashboard");
-			} catch (error) {
-				const { status, data } = error.response || {};
-				if (status === 400) {
-					setBidError("Validation error");
-					setErrors(data?.error || ["An unknown validation error occurred"]);
-				} else {
-					setBidError("Servor error");
-					setErrors(data?.error || ["An unknown server error occurred"]);
-				}
+			alert("Bid submitted successfully!");
+			navigate("/dashboard");
+		} catch (error) {
+			const { status, data } = error.response;
+			if (status === 400) {
+				setRegisterStatus("Validation error");
+				setValidationErrors(data.errors);
+			} else {
+				setRegisterStatus("A server error occurred. Please try again later.");
+				setValidationErrors(data.errors);
 			}
 		}
 	};
 
 	return (
-		<div className="submit-bid-form-container">
+		<div className="main submit-bid-form-container">
 			{tender ? (
 				<div className="tender-info">
 					<h3>Tender Information</h3>
@@ -122,15 +105,6 @@ const SubmitBidForm = () => {
 				<p>Loading tender details...</p>
 			)}
 			<h2>Submit Bid</h2>
-			{errors.length > 0 && (
-				<div className="error-message">
-					<ul>
-						{errors.map((error, index) => (
-							<li key={index}>{error}</li>
-						))}
-					</ul>
-				</div>
-			)}
 			<form onSubmit={handleSubmit} className="submit-bid-form">
 				<div className="form-group">
 					<label htmlFor="coverLetter">Cover Letter:</label>
@@ -164,11 +138,11 @@ const SubmitBidForm = () => {
 				</div>
 				<button type="submit">Submit Bid</button>
 			</form>
-			{bidError && (
+			{registerStatus && (
 				<div className="message">
-					<p>{bidError}</p>
+					<p>{registerStatus}</p>
 					<ul className="error-list">
-						{errors.map((error, index) => (
+						{validationErrors.map((error, index) => (
 							<li key={index}>{error}</li>
 						))}
 					</ul>
