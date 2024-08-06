@@ -642,7 +642,7 @@ router.post("/bid", async (req, res) => {
 		const errors = [];
 
 		if (!validStatuses.includes(status)) {
-			errors.push("Invalid bid status");
+			res.status(500).json({ code: "SERVER_ERROR" });
 		}
 
 		if (cover_letter && cover_letter.length > 1000) {
@@ -658,7 +658,7 @@ router.post("/bid", async (req, res) => {
 		}
 
 		if (!bidding_amount || isNaN(bidding_amount) || bidding_amount <= 0) {
-			errors.push("Input a valid amount");
+			errors.push("Input a valid bidding amount");
 		}
 
 		if (errors.length > 0) {

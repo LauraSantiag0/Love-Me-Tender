@@ -12,7 +12,7 @@
 	color: red;
 	font-size: 1.5rem;
 	padding-inline: 2rem;
-	display: flex;
+	display: block;
 	gap: 1rem;
 }
 
@@ -21,6 +21,6 @@
 }
 
 .error-list {
-	display: flex;
+	display: block;
 	gap: 1rem;
 }

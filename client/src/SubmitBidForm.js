@@ -8,8 +8,7 @@ const SubmitBidForm = () => {
 	const [coverLetter, setCoverLetter] = useState("");
 	const [proposedDuration, setProposedDuration] = useState("");
 	const [proposedBudget, setProposedBudget] = useState("");
-	const [registerStatus, setRegisterStatus] = useState("");
-	const [validationErrors, setValidationErrors] = useState([]);
+	const [errors, setErrors] = useState([]);
 	const [tender, setTender] = useState(null);
 	const navigate = useNavigate();
 
@@ -19,9 +18,7 @@ const SubmitBidForm = () => {
 				const response = await get(`/api/tenders/${tenderId}`);
 				setTender(response.resource);
 			} catch (error) {
-				setValidationErrors([
-					"An error occurred while fetching tender details.",
-				]);
+				setErrors(["An error occurred while fetching tender details."]);
 			}
 		};
 
@@ -43,29 +40,45 @@ const SubmitBidForm = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
+		const newErrors = [];
+
+		if (coverLetter.length > 1000) {
+			newErrors.push("Maximum length is upto 1,000 characters");
+		}
+
 		const duration = parseInt(proposedDuration);
+		if (isNaN(duration) || duration < 1 || duration > 1000) {
+			newErrors.push("Duration must be between 1 and 1,000 days");
+		}
+
 		const budget = parseFloat(proposedBudget);
-		try {
-			const bidData = {
-				tenderId,
-				bidding_amount: budget,
-				cover_letter: coverLetter,
-				suggested_duration_days: duration,
-				bidding_date: new Date(),
-			};
+		if (isNaN(budget) || budget <= 0) {
+			newErrors.push("Input a valid bidding amount");
+		}
 
-			await post("/api/bid", bidData);
+		if (newErrors.length > 0) {
+			setErrors(newErrors);
+		} else {
+			try {
+				const bidData = {
+					tenderId,
+					bidding_amount: budget,
+					cover_letter: coverLetter,
+					suggested_duration_days: duration,
+					bidding_date: new Date(),
+				};
 
-			alert("Bid submitted successfully!");
-			navigate("/dashboard");
-		} catch (error) {
-			const { status, data } = error.response;
-			if (status === 400) {
-				setRegisterStatus("Validation error");
-				setValidationErrors(data.errors);
-			} else {
-				setRegisterStatus("A server error occurred. Please try again later.");
-				setValidationErrors(data.errors);
+				await post("/api/bid", bidData);
+
+				alert("Bid submitted successfully!");
+				navigate("/dashboard");
+			} catch (error) {
+				const { status, data } = error.response;
+				if (status === 400) {
+					setErrors(data.errors);
+				} else {
+					setErrors(data.errors);
+				}
 			}
 		}
 	};
@@ -138,16 +151,13 @@ const SubmitBidForm = () => {
 				</div>
 				<button type="submit">Submit Bid</button>
 			</form>
-			{registerStatus && (
-				<div className="message">
-					<p>{registerStatus}</p>
-					<ul className="error-list">
-						{validationErrors.map((error, index) => (
-							<li key={index}>{error}</li>
-						))}
-					</ul>
-				</div>
-			)}
+			<div className="message">
+				<ul className="error-list">
+					{errors.map((error, index) => (
+						<li key={index}>{error}</li>
+					))}
+				</ul>
+			</div>
 		</div>
 	);
 };
