@@ -8,6 +8,7 @@ const SubmitBidForm = () => {
 	const [coverLetter, setCoverLetter] = useState("");
 	const [proposedDuration, setProposedDuration] = useState("");
 	const [proposedBudget, setProposedBudget] = useState("");
+	const [errorStatus, setErrorStatus] = useState("");
 	const [errors, setErrors] = useState([]);
 	const [tender, setTender] = useState(null);
 	const navigate = useNavigate();
@@ -40,45 +41,42 @@ const SubmitBidForm = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
-		const newErrors = [];
-
 		if (coverLetter.length > 1000) {
-			newErrors.push("Maximum length is upto 1,000 characters");
+			errors.push("Maximum length is upto 1,000 characters");
 		}
 
 		const duration = parseInt(proposedDuration);
 		if (isNaN(duration) || duration < 1 || duration > 1000) {
-			newErrors.push("Duration must be between 1 and 1,000 days");
+			errors.push("Duration must be between 1 and 1,000 days");
 		}
 
 		const budget = parseFloat(proposedBudget);
 		if (isNaN(budget) || budget <= 0) {
-			newErrors.push("Input a valid bidding amount");
+			errors.push("Input a valid bidding amount");
 		}
 
-		if (newErrors.length > 0) {
-			setErrors(newErrors);
-		} else {
-			try {
-				const bidData = {
-					tenderId,
-					bidding_amount: budget,
-					cover_letter: coverLetter,
-					suggested_duration_days: duration,
-					bidding_date: new Date(),
-				};
+		try {
+			const bidData = {
+				tenderId,
+				bidding_amount: budget,
+				cover_letter: coverLetter,
+				suggested_duration_days: duration,
+				bidding_date: new Date(),
+			};
 
-				await post("/api/bid", bidData);
-
-				alert("Bid submitted successfully!");
-				navigate("/dashboard");
-			} catch (error) {
-				const { status, data } = error.response;
-				if (status === 400) {
-					setErrors(data.errors);
-				} else {
-					setErrors(data.errors);
-				}
+			await post("/api/bid", bidData);
+			setErrorStatus(null);
+			setErrors([]);
+			alert("Bid submitted successfully!");
+			navigate("/dashboard");
+		} catch (error) {
+			const { status, data } = error.response;
+			if (status === 400) {
+				setErrorStatus("Validation Error");
+				setErrors(data.errors || []);
+			} else {
+				setErrorStatus("Server Error. Try again later.");
+				setErrors([]);
 			}
 		}
 	};
@@ -151,13 +149,16 @@ const SubmitBidForm = () => {
 				</div>
 				<button type="submit">Submit Bid</button>
 			</form>
-			<div className="message">
-				<ul className="error-list">
-					{errors.map((error, index) => (
-						<li key={index}>{error}</li>
-					))}
-				</ul>
-			</div>
+			{errorStatus && (
+				<div className="message">
+					<p>{errorStatus}</p>
+					<ul className="error-list">
+						{errors.map((error, index) => (
+							<li key={index}>{error}</li>
+						))}
+					</ul>
+				</div>
+			)}
 		</div>
 	);
 };
