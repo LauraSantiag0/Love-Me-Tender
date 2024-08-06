@@ -75,13 +75,13 @@ const SubmitBidForm = () => {
 				alert("Bid submitted successfully!");
 				navigate("/dashboard");
 			} catch (error) {
-				const { status, data } = error.response;
+				const { status, data } = error.response || {};
 				if (status === 400) {
 					setBidError("Validation error");
-					setErrors(data.error);
+					setErrors(data?.error || ["An unknown validation error occurred"]);
 				} else {
 					setBidError("Servor error");
-					setErrors(data.error);
+					setErrors(data?.error || ["An unknown server error occurred"]);
 				}
 			}
 		}
