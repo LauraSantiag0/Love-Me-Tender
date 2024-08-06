@@ -375,55 +375,63 @@ router.get("/tenders", async (req, res) => {
 	const offset = (page - 1) * limit;
 
 	const countSql = "SELECT COUNT(*) FROM tender";
-	const dataSql = `
-<<<<<<< HEAD
-		SELECT id, title, creation_date, announcement_date, deadline, description, status
-=======
+	const tendersSql = `
 		SELECT id, title, creation_date, announcement_date, deadline, description, status, closing_date
->>>>>>> dac0645 (fix code acoording to feedback)
 		FROM tender 
 		ORDER BY creation_date DESC 
 		LIMIT $1 OFFSET $2
 	`;
-	const bidSql = `
-    SELECT bid.*
-    FROM bid
-    JOIN tender ON bid.tender_id = tender.id
-    ORDER BY tender.creation_date DESC
-    LIMIT $1 OFFSET $2
-`;
 
 	try {
 		const countResult = await db.query(countSql);
 		const totalItems = parseInt(countResult.rows[0].count, 10);
 		const totalPages = Math.ceil(totalItems / limit);
 
-		const dataResult = await db.query(dataSql, [limit, offset]);
-		const tenders = dataResult.rows;
+		const tendersResult = await db.query(tendersSql, [limit, offset]);
+		const tenders = tendersResult.rows;
 
-		const bidsResult = await db.query(bidSql, [limit, offset]);
+		const tenderIds = tenders.map((tender) => tender.id);
 
-		const bidsByTenderId = bidsResult.rows.reduce((acc, bid) => {
-			if (!acc[bid.tender_id]) {
-				acc[bid.tender_id] = [];
-			}
-			acc[bid.tender_id].push(bid);
-			return acc;
-		}, {});
+		if (tenderIds.length > 0) {
+			const bidsSql = `
+				SELECT *
+				FROM bid
+				WHERE tender_id = ANY($1::int[])
+			`;
 
-		const tendersWithBids = tenders.map((tender) => ({
-			...tender,
-			bids: bidsByTenderId[tender.id] || [],
-		}));
+			const bidsResult = await db.query(bidsSql, [tenderIds]);
 
-		res.status(200).json({
-			results: tendersWithBids,
-			pagination: {
-				itemsPerPage: limit,
-				currentPage: page,
-				totalPages,
-			},
-		});
+			const bidsByTenderId = bidsResult.rows.reduce((acc, bid) => {
+				if (!acc[bid.tender_id]) {
+					acc[bid.tender_id] = [];
+				}
+				acc[bid.tender_id].push(bid);
+				return acc;
+			}, {});
+
+			const tendersWithBids = tenders.map((tender) => ({
+				...tender,
+				bids: bidsByTenderId[tender.id] || [],
+			}));
+
+			res.status(200).json({
+				results: tendersWithBids,
+				pagination: {
+					itemsPerPage: limit,
+					currentPage: page,
+					totalPages,
+				},
+			});
+		} else {
+			res.status(200).json({
+				results: [],
+				pagination: {
+					itemsPerPage: limit,
+					currentPage: page,
+					totalPages,
+				},
+			});
+		}
 	} catch (err) {
 		res.status(500).json({ code: "SERVER_ERROR" });
 	}
