@@ -189,6 +189,7 @@ router.post("/signup", async (req, res) => {
 			userTableValues = [userId, company, description, address];
 		} else {
 			await client.query("ROLLBACK");
+			console.error(error); // eslint-disable-line no-console, no-undef
 			return res.status(500).json({ code: "SERVER_ERROR" });
 		}
 
@@ -213,6 +214,7 @@ router.post("/signup", async (req, res) => {
 		res.status(201).json({});
 	} catch (error) {
 		await client.query("ROLLBACK");
+		console.error(error); // eslint-disable-line no-console, no-undef
 		res.status(500).json({ code: "SERVER_ERROR" });
 	} finally {
 		client.release();
@@ -728,11 +730,13 @@ router.post("/bid", async (req, res) => {
 			});
 		} catch (error) {
 			await client.query("ROLLBACK");
+			console.error(error); // eslint-disable-line no-console, no-undef
 			res.status(500).json({ code: "SERVER_ERROR" });
 		} finally {
 			client.release();
 		}
 	} catch (error) {
+		console.error(error); // eslint-disable-line no-console, no-undef
 		res.status(500).json({ code: "SERVER_ERROR" });
 	}
 });
