@@ -6,9 +6,8 @@ import "./SubmitBidForm.css";
 const SubmitBidForm = () => {
 	const { tenderId } = useParams();
 	const [coverLetter, setCoverLetter] = useState("");
-	const [proposedDuration, setProposedDuration] = useState("");
-	const [proposedBudget, setProposedBudget] = useState("");
-	const [errorStatus, setErrorStatus] = useState("");
+	const [duration, setDuration] = useState("");
+	const [budget, setBudget] = useState("");
 	const [errors, setErrors] = useState([]);
 	const [tender, setTender] = useState(null);
 	const navigate = useNavigate();
@@ -16,8 +15,9 @@ const SubmitBidForm = () => {
 	useEffect(() => {
 		const fetchTender = async () => {
 			try {
-				const response = await get(`/api/tenders/${tenderId}`);
-				setTender(response.resource);
+				const data = await get(`/api/tenders/${tenderId}`);
+				setTender(data.resource);
+				setErrors([]);
 			} catch (error) {
 				setErrors(["An error occurred while fetching tender details."]);
 			}
@@ -30,59 +30,68 @@ const SubmitBidForm = () => {
 		setCoverLetter(e.target.value);
 	};
 
-	const handleProposedDurationChange = (e) => {
-		setProposedDuration(e.target.value);
+	const handleDurationChange = (e) => {
+		setDuration(e.target.value);
 	};
 
-	const handleProposedBudgetChange = (e) => {
-		setProposedBudget(e.target.value);
+	const handleBudgetChange = (e) => {
+		setBudget(e.target.value);
 	};
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
+	const handleSubmit = async (event) => {
+		event.preventDefault();
+
+		const newErrors = [];
 
 		if (coverLetter.length > 1000) {
-			errors.push("Maximum length is upto 1,000 characters");
+			newErrors.push("Maximum length is upto 1,000 characters");
 		}
 
-		const duration = parseInt(proposedDuration);
 		if (isNaN(duration) || duration < 1 || duration > 1000) {
-			errors.push("Duration must be between 1 and 1,000 days");
+			newErrors.push("put a valid duration");
 		}
 
-		const budget = parseFloat(proposedBudget);
 		if (isNaN(budget) || budget <= 0) {
-			errors.push("Input a valid bidding amount");
+			newErrors.push("Input a valid bidding amount");
 		}
 
-		try {
-			const bidData = {
-				tenderId,
-				bidding_amount: budget,
-				cover_letter: coverLetter,
-				suggested_duration_days: duration,
-				bidding_date: new Date(),
-			};
+		if (newErrors.length === 0) {
+			try {
+				const bidData = {
+					tenderId,
+					bidding_amount: parseFloat(budget),
+					suggested_duration_days: parseInt(duration, 10),
+					cover_letter: coverLetter,
+					bidding_date: new Date(),
+				};
 
-			await post("/api/bid", bidData);
-			setErrorStatus(null);
-			setErrors([]);
-			alert("Bid submitted successfully!");
-			navigate("/dashboard");
-		} catch (error) {
-			const { status, data } = error.response;
-			if (status === 400) {
-				setErrorStatus("Validation Error");
-				setErrors(data.errors || []);
-			} else {
-				setErrorStatus("Server Error. Try again later.");
+				await post("api/bid", bidData);
+
+				setCoverLetter("");
+				setDuration("");
+				setBudget("");
 				setErrors([]);
+				alert("Bid submitted successfully!");
+				navigate("/dashboard");
+			} catch (error) {
+				setErrors([error.message]);
 			}
+		} else {
+			setErrors(newErrors);
 		}
 	};
 
 	return (
-		<div className="main submit-bid-form-container">
+		<div className="submit-bid-form-container">
+			{errors.length > 0 && (
+				<div className="error-message">
+					<ul>
+						{errors.map((error, index) => (
+							<li key={index}>{error}</li>
+						))}
+					</ul>
+				</div>
+			)}
 			{tender ? (
 				<div className="tender-info">
 					<h3>Tender Information</h3>
@@ -132,8 +141,8 @@ const SubmitBidForm = () => {
 					<input
 						type="number"
 						id="proposedDuration"
-						value={proposedDuration}
-						onChange={handleProposedDurationChange}
+						value={duration}
+						onChange={handleDurationChange}
 						required
 					/>
 				</div>
@@ -142,23 +151,15 @@ const SubmitBidForm = () => {
 					<input
 						type="number"
 						id="proposedBudget"
-						value={proposedBudget}
-						onChange={handleProposedBudgetChange}
+						value={budget}
+						onChange={handleBudgetChange}
 						required
 					/>
 				</div>
-				<button type="submit">Submit Bid</button>
+				<button className="form-btn" type="submit">
+					Submit Bid
+				</button>
 			</form>
-			{errorStatus && (
-				<div className="message">
-					<p>{errorStatus}</p>
-					<ul className="error-list">
-						{errors.map((error, index) => (
-							<li key={index}>{error}</li>
-						))}
-					</ul>
-				</div>
-			)}
 		</div>
 	);
 };

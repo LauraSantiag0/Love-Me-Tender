@@ -654,91 +654,86 @@ router.post("/bid/:bidId/status", async (req, res) => {
 const validStatuses = ["Active", "Withdrawn", "Awarded", "Rejected"];
 
 router.post("/bid", async (req, res) => {
+	const { tenderId, bidding_amount, cover_letter, suggested_duration_days } =
+		req.body;
+	const bidderId = req.user.id;
+	const biddingDate = new Date();
+	const status = "Active";
+
+	const newErrors = [];
+
+	if (!validStatuses.includes(status)) {
+		console.error(error); // eslint-disable-line no-console, no-undef
+		res.status(500).json({ code: "SERVER_ERROR" });
+	}
+
+	if (cover_letter && cover_letter.length > 1000) {
+		newErrors.push("Maximum length is upto 1,000 characters");
+	}
+
+	if (
+		!suggested_duration_days ||
+		suggested_duration_days < 1 ||
+		suggested_duration_days > 1000
+	) {
+		newErrors.push("Duration must be between 1 and 1,000 days");
+	}
+
+	if (!bidding_amount || isNaN(bidding_amount) || bidding_amount <= 0) {
+		newErrors.push("Input a valid bidding amount");
+	}
+
+	if (newErrors.length > 0) {
+		return res.status(400).json({
+			code: "VALIDATION_ERROR",
+			errors: newErrors,
+		});
+	}
+
+	const client = await pool.connect();
+
 	try {
-		const { tenderId, bidding_amount, cover_letter, suggested_duration_days } =
-			req.body;
-		const bidderId = req.user.id;
-		const biddingDate = new Date();
-		const status = "Active";
+		await client.query("BEGIN");
 
-		const errors = [];
-
-		if (!validStatuses.includes(status)) {
-			console.error(error); // eslint-disable-line no-console, no-undef
-			res.status(500).json({ code: "SERVER_ERROR" });
-		}
-
-		if (cover_letter && cover_letter.length > 1000) {
-			errors.push("Maximum length is upto 1,000 characters");
-		}
-
-		if (
-			!suggested_duration_days ||
-			suggested_duration_days < 1 ||
-			suggested_duration_days > 1000
-		) {
-			errors.push("Duration must be between 1 and 1,000 days");
-		}
-
-		if (!bidding_amount || isNaN(bidding_amount) || bidding_amount <= 0) {
-			errors.push("Input a valid bidding amount");
-		}
-
-		if (errors.length > 0) {
-			return res.status(400).json({
-				code: "VALIDATION_ERROR",
-				errors: errors,
-			});
-		}
-
-		const client = await pool.connect();
-
-		try {
-			await client.query("BEGIN");
-
-			const checkBidQuery = `
+		const checkBidQuery = `
 				SELECT * FROM bid WHERE tender_id = $1 AND bidder_id = $2
 			`;
-			const checkBidValues = [tenderId, bidderId];
-			const existingBid = await client.query(checkBidQuery, checkBidValues);
+		const checkBidValues = [tenderId, bidderId];
+		const existingBid = await client.query(checkBidQuery, checkBidValues);
 
-			if (existingBid.rows.length > 0) {
-				await client.query("ROLLBACK");
-				return res.status(400).json({ code: "DUPLICATE_ENTRY" });
-			}
+		if (existingBid.rows.length > 0) {
+			await client.query("ROLLBACK");
+			return res.status(400).json({ code: "DUPLICATE_ENTRY" });
+		}
 
-			const bidQuery = `
+		const bidQuery = `
 				INSERT INTO bid (tender_id, bidder_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
 				VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING bid_id
 			`;
 
-			const bidValues = [
-				tenderId,
-				bidderId,
-				biddingDate,
-				status,
-				bidding_amount,
-				cover_letter || null,
-				suggested_duration_days,
-			];
+		const bidValues = [
+			tenderId,
+			bidderId,
+			biddingDate,
+			status,
+			bidding_amount,
+			cover_letter || null,
+			suggested_duration_days,
+		];
 
-			const bidResult = await client.query(bidQuery, bidValues);
+		const bidResult = await client.query(bidQuery, bidValues);
 
-			await client.query("COMMIT");
+		await client.query("COMMIT");
 
-			res.status(201).json({
-				resource: bidResult.rows[0],
-			});
-		} catch (error) {
-			await client.query("ROLLBACK");
-			console.error(error); // eslint-disable-line no-console, no-undef
-			res.status(500).json({ code: "SERVER_ERROR" });
-		} finally {
-			client.release();
-		}
+		res.status(201).json({
+			resource: bidResult.rows[0],
+		});
 	} catch (error) {
+		await client.query("ROLLBACK");
 		console.error(error); // eslint-disable-line no-console, no-undef
 		res.status(500).json({ code: "SERVER_ERROR" });
+	} finally {
+		client.release();
 	}
 });
 
