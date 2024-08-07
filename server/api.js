@@ -664,6 +664,7 @@ router.post("/bid", async (req, res) => {
 		const errors = [];
 
 		if (!validStatuses.includes(status)) {
+			console.error(error); // eslint-disable-line no-console, no-undef
 			res.status(500).json({ code: "SERVER_ERROR" });
 		}
 
