@@ -364,7 +364,7 @@ router.get("/bidder-bid", async (req, res) => {
 
 		const bidsResult = await db.query(
 			`
-			SELECT b.bid_id, b.tender_id, b.bidding_amount, b.status, b.bidding_date AS submission_date, b.suggested_duration_days, t.title, t.closing_date, t.announcement_date, t.status AS tender_status
+			SELECT b.bid_id, b.tender_id, b.bidding_amount, b.status, b.bidding_date AS submission_date, b.suggested_duration_days, t.title
 			FROM bid b
 			JOIN tender t ON b.tender_id = t.id
 			WHERE b.bidder_id = $1
@@ -556,7 +556,7 @@ router.post("/bid/:bidId/status", async (req, res) => {
 	const user = req.user;
 
 	if (!validStatuses.includes(status)) {
-		return res.status(500).json({ code: "SERVER_ERROR" });
+		return res.status(400).send({ code: "INVALID_STATUS" });
 	}
 
 	let client;

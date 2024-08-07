@@ -5,30 +5,32 @@ const BidderBiddingList = () => {
 	const [loading, setLoading] = useState(true);
 	const [bidderList, setBidderList] = useState([]);
 	const [errorMsg, setErrorMsg] = useState(null);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [totalPages, setTotalPages] = useState(1);
 
-	const fetchBidderBids = async (page) => {
+	const fetchBidderBids = async () => {
 		try {
-			const data = await get(`api/bidder-bid?page=${page}`);
+			const data = await get("api/bidder-bid?page=1");
 			setLoading(false);
 			setBidderList(data.results);
-			setTotalPages(data.pagination.totalPages);
 		} catch (error) {
-			setErrorMsg(error.message);
+			setErrorMsg("Sever Error");
 		}
 	};
 
 	useEffect(() => {
-		fetchBidderBids(currentPage);
-	}, [currentPage]);
+		fetchBidderBids();
+	}, []);
 
-	const handleStatusChange = async (bidId, status) => {
+	const handleStatusChange = async (bidId, newStatus) => {
 		try {
-			await post(`/api/bid/${bidId}/status`, { status });
-			fetchBidderBids(currentPage);
+			setBidderList((prevList) =>
+				prevList.map((bid) =>
+					bid.bid_id === bidId ? { ...bid, status: newStatus } : bid
+				)
+			);
+
+			await post(`/api/bid/${bidId}/status`, { status: newStatus });
 		} catch (error) {
-			setErrorMsg(error.message);
+			setErrorMsg("Server Error");
 		}
 	};
 
@@ -44,50 +46,28 @@ const BidderBiddingList = () => {
 		return <div>No Bidding placed yet!!</div>;
 	}
 
-	const handlePrevious = () => {
-		if (currentPage > 1) {
-			setCurrentPage(currentPage - 1);
-		}
-	};
-
-	const handleNext = () => {
-		if (currentPage < totalPages) {
-			setCurrentPage(currentPage + 1);
-		}
-	};
-
 	return (
 		<main>
 			<h1>Bidder Bidding List</h1>
 			<div className="bids-container">
-				{bidderList.map((bid) => (
-					<div className="bid-card" key={bid.bid_id}>
-						<p>Bid ID: {bid.bid_id}</p>
-						<p>Tender ID: {bid.tender_id}</p>
-						<p>Tender Title: {bid.title}</p>
+				{" "}
+				{bidderList.map((bid, index) => (
+					<div className="bid-card" key={index}>
+						<p>Status: {bid.status}</p>
 						<p>
-							Tender Closing Date:{" "}
-							{new Date(bid.closing_date).toLocaleDateString()}
+							submitted on: {new Date(bid.submission_date).toLocaleDateString()}
 						</p>
-						<p>
-							Tender Announcement Date:{" "}
-							{new Date(bid.announcement_date).toLocaleDateString()}
-						</p>
-						<p>
-							Bid Submission Date:{" "}
-							{new Date(bid.submission_date).toLocaleDateString()}
-						</p>
-						<p>Tender Status: {bid.tender_status}</p>
-						<p>Bid Status: {bid.status}</p>
+						<p>Bidding Amount: {bid.bidding_amount}</p>
+						<div>
+							Cover Letter:
+							<p>{bid.cover_letter}</p>
+						</div>
+						<p>Completion Time: {bid.suggested_duration_days}days</p>
 						<button onClick={() => handleStatusChange(bid.bid_id, "Withdrawn")}>
 							Withdraw
 						</button>
 					</div>
 				))}
-			</div>
-			<div className="pagination">
-				{currentPage > 1 && <button onClick={handlePrevious}>Previous</button>}
-				{currentPage < totalPages && <button onClick={handleNext}>Next</button>}
 			</div>
 		</main>
 	);
