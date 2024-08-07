@@ -364,7 +364,7 @@ router.get("/bidder-bid", async (req, res) => {
 
 		const bidsResult = await db.query(
 			`
-			SELECT b.bid_id, b.tender_id, b.bidding_amount, b.status, b.bidding_date AS submission_date, b.suggested_duration_days, t.title
+			SELECT b.bid_id, b.tender_id, b.bidding_amount, b.status, b.bidding_date AS submission_date, b.suggested_duration_days, t.title, t.closing_date, t.announcement_date, t.status AS tender_status
 			FROM bid b
 			JOIN tender t ON b.tender_id = t.id
 			WHERE b.bidder_id = $1
@@ -552,11 +552,11 @@ SELECT bid.*, bidder.first_name, bidder.last_name, ba.attachment
 router.post("/bid/:bidId/status", async (req, res) => {
 	const bidId = parseInt(req.params.bidId, 10);
 	const status = req.body.status;
-	const validStatuses = ["Awarded", "Rejected", "Withdraw", "In review"];
+	const validStatuses = ["Awarded", "Rejected", "Withdrawn", "In review"];
 	const user = req.user;
 
 	if (!validStatuses.includes(status)) {
-		return res.status(400).send({ code: "INVALID_STATUS" });
+		return res.status(500).json({ code: "SERVER_ERROR" });
 	}
 
 	let client;
@@ -600,7 +600,7 @@ router.post("/bid/:bidId/status", async (req, res) => {
 			return res.status(403).send({ code: "FORBIDDEN" });
 		}
 
-		if (status === "Withdraw" && user.id !== bidderId) {
+		if (status === "Withdrawn" && user.id !== bidderId) {
 			await client.query("ROLLBACK");
 			return res.status(403).send({ code: "FORBIDDEN" });
 		}
