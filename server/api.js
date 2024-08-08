@@ -613,6 +613,18 @@ router.post("/bid/:bidId/status", async (req, res) => {
 			return res.status(403).send({ code: "FORBIDDEN" });
 		}
 
+		if (status === "Active") {
+			const activeBidCheck = await client.query(
+				"SELECT bid_id FROM bid WHERE tender_id = $1 AND bidder_id = $2 AND status = 'Active' AND bid_id != $3;",
+				[tenderId, bidderId, bidId]
+			);
+
+			if (activeBidCheck.rowCount > 0) {
+				await client.query("ROLLBACK");
+				return res.status(400).send({ code: "DUPLICATE_ACTIVE_BID" });
+			}
+		}
+
 		if (status === "Awarded") {
 			const rejectStatus = "Rejected";
 
