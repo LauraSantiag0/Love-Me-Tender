@@ -707,31 +707,53 @@ router.post("/bid", async (req, res) => {
 			const checkBidQuery = `
 				SELECT * FROM bid WHERE tender_id = $1 AND bidder_id = $2
 			`;
+
 			const checkBidValues = [tenderId, bidderId];
 			const existingBid = await client.query(checkBidQuery, checkBidValues);
 
-			if (existingBid.rows.length > 0) {
-				await client.query("ROLLBACK");
-				return res.status(400).json({ code: "DUPLICATE_ENTRY" });
-			}
+			let bidResult;
 
-			const bidQuery = `
+			if (existingBid.rows.length > 0) {
+				const existingBidId = existingBid.rows[0].bid_id;
+				const existingStatus = existingBid.rows[0].status;
+
+				if (existingStatus === "Withdrawn") {
+					const updateBidQuery = `
+                        UPDATE bid 
+                        SET bidding_date = $1, status = $2, bidding_amount = $3, cover_letter = $4, suggested_duration_days = $5 
+                        WHERE bid_id = $6
+                    `;
+					const updateBidValues = [
+						biddingDate,
+						status,
+						bidding_amount,
+						cover_letter || null,
+						suggested_duration_days,
+						existingBidId,
+					];
+					bidResult = await client.query(updateBidQuery, updateBidValues);
+				} else {
+					await client.query("ROLLBACK");
+					return res.status(400).json({ code: "DUPLICATE_ENTRY" });
+				}
+			} else {
+				const bidQuery = `
 				INSERT INTO bid (tender_id, bidder_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
 				VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING bid_id
 			`;
 
-			const bidValues = [
-				tenderId,
-				bidderId,
-				biddingDate,
-				status,
-				bidding_amount,
-				cover_letter || null,
-				suggested_duration_days,
-			];
+				const bidValues = [
+					tenderId,
+					bidderId,
+					biddingDate,
+					status,
+					bidding_amount,
+					cover_letter || null,
+					suggested_duration_days,
+				];
 
-			const bidResult = await client.query(bidQuery, bidValues);
-
+				bidResult = await client.query(bidQuery, bidValues);
+			}
 			await client.query("COMMIT");
 
 			res.status(201).json({
