@@ -38,8 +38,8 @@ const TendersList = () => {
 	}, []);
 
 	useEffect(() => {
-		fetchTenders(currentPage, sortField);
-	}, [fetchTenders, currentPage, sortField]);
+		fetchTenders(pagination.currentPage, sortField);
+	}, [fetchTenders, pagination.currentPage, sortField]);
 
 	const loadNextPage = () => {
 		if (pagination.currentPage < pagination.totalPages && !loading) {
@@ -70,6 +70,10 @@ const TendersList = () => {
 
 	const handleSortChange = (event) => {
 		setSortField(event.target.value);
+		setPagination((prevPagination) => ({
+			...prevPagination,
+			currentPage: 1,
+		}));
 	};
 
 	return (
