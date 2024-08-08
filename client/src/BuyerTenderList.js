@@ -10,7 +10,6 @@ const BuyerTenderList = () => {
 	const [loading, setLoading] = useState(true);
 	const [statusToUpdate, setStatusToUpdate] = useState(null);
 	const [selectedTenderId, setSelectedTenderId] = useState(null);
-	// const [statusOptions, setStatusOptions] = useState([]);
 	const [expandedTenderId, setExpandedTenderId] = useState(null);
 	const [pagination, setPagination] = useState({
 		itemsPerPage: 5,
@@ -19,10 +18,16 @@ const BuyerTenderList = () => {
 	});
 	const navigate = useNavigate();
 
+	const getToken = () => localStorage.getItem("authToken");
+
 	const fetchTenders = useCallback(async (page) => {
 		setLoading(true);
 		try {
-			const data = await get(`/api/buyer-tender?page=${page}`);
+			const data = await get(`/api/buyer-tender?page=${page}`, {
+				headers: {
+					Authorization: `Bearer ${getToken()}`,
+				},
+			});
 			setBuyerTenders(data.results);
 			setPagination(data.pagination);
 			setErrorMsg(null);
@@ -34,18 +39,38 @@ const BuyerTenderList = () => {
 	}, []);
 
 	const updateTenderStatus = useCallback(
-		async (tenderId, status) => {
+		async (tenderId, newStatus) => {
+			const currentTender = buyerTenders.find(
+				(tender) => tender.id === tenderId
+			);
+			if (!currentTender) {
+				setErrorMsg("Tender not found");
+				return;
+			}
+
+			const validStatuses = {
+				Active: ["In Review", "Closed"],
+				"In Review": ["Closed"],
+				Closed: [],
+			};
+
+			if (!validStatuses[currentTender.status].includes(newStatus)) {
+				setErrorMsg("Invalid status transition");
+				//  console.log("Invalid status transition detected");
+				return;
+			}
 			try {
-				console.log("Updating tender status:", { tenderId, status }); // Debugging log
+				// console.log("Updating tender status:", { tenderId, newStatus });
 
 				const response = await post(`/api/tender/${tenderId}/status`, {
 					headers: {
 						"Content-Type": "application/json",
+						Authorization: `Bearer ${getToken()}`,
 					},
-					body: JSON.stringify({ status }), // Ensure the body is a JSON string with the status
+					body: JSON.stringify({ status: newStatus }),
 				});
 
-				console.log("API response status:", response.status); // Debugging log
+				// console.log("API response status:", response.status);
 
 				if (response.ok) {
 					fetchTenders(currentPage);
@@ -61,7 +86,7 @@ const BuyerTenderList = () => {
 				setErrorMsg("Error updating status");
 			}
 		},
-		[fetchTenders, currentPage]
+		[buyerTenders, fetchTenders, currentPage]
 	);
 
 	useEffect(() => {
@@ -73,10 +98,6 @@ const BuyerTenderList = () => {
 			updateTenderStatus(selectedTenderId, statusToUpdate);
 		}
 	}, [statusToUpdate, selectedTenderId, updateTenderStatus]);
-
-	// useEffect(() => {
-	// 	setStatusOptions(["Active", "In Review", "Closed"]);
-	// }, []);
 
 	const loadNextPage = () => {
 		if (pagination.currentPage < pagination.totalPages && !loading) {
@@ -191,19 +212,12 @@ const BuyerTenderList = () => {
 							{tender.status === "Active" && (
 								<div>
 									<button
-										onClick={() => {
-											setSelectedTenderId(tender.id);
-											setStatusToUpdate("In Review");
-										}}
+										onClick={() => updateTenderStatus(tender.id, "In Review")}
 									>
-										{" "}
 										In Review
 									</button>
 									<button
-										onClick={() => {
-											setSelectedTenderId(tender.id);
-											setStatusToUpdate("Closed");
-										}}
+										onClick={() => updateTenderStatus(tender.id, "Closed")}
 									>
 										Close Tender
 									</button>
@@ -212,10 +226,7 @@ const BuyerTenderList = () => {
 							{tender.status === "In Review" && (
 								<div>
 									<button
-										onClick={() => {
-											setSelectedTenderId(tender.id);
-											setStatusToUpdate("Closed");
-										}}
+										onClick={() => updateTenderStatus(tender.id, "Closed")}
 									>
 										Close Tender
 									</button>
