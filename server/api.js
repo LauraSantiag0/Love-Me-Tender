@@ -349,6 +349,57 @@ router.get("/buyer-tender", async (req, res) => {
 		: res.status(500).send({ code: "SERVER_ERROR" });
 });
 
+router.post("/tender/:tenderId/status", async (req, res) => {
+	const tenderId = parseInt(req.params.tenderId, 10);
+	const newStatus = req.body.status;
+
+	//   console.log("Received status update:", { tenderId, newStatus });
+
+	const validStatuses = {
+		Active: ["In Review", "Closed"],
+		"In Review": ["Closed"],
+	};
+
+	try {
+		const tenderResult = await db.query(
+			"SELECT status, buyer_id FROM tender WHERE id = $1",
+			[tenderId]
+		);
+
+		if (tenderResult.rowCount === 0) {
+			return res.status(404).send({ code: "TENDER_NOT_FOUND" });
+		}
+
+		const tender = tenderResult.rows[0];
+		// console.log(`Current status: ${tender.status}, New status: ${newStatus}`);
+
+		if (tender.buyer_id !== req.user.id) {
+			// console.error(`Forbidden access attempt by user ${req.user.id} on tender ${tenderId}`);
+			return res.status(403).send({ code: "FORBIDDEN" });
+		}
+
+		if (tender.status === "Awarded" || tender.status === "Closed") {
+			// console.error(`Status change not allowed for tender ${tenderId} with status ${tender.status}`);
+			return res.status(400).send({ code: "STATUS_CHANGE_NOT_ALLOWED" });
+		}
+
+		if (!validStatuses[tender.status].includes(newStatus)) {
+			// console.error(`Invalid status transition from ${tender.status} to ${newStatus} for tender ${tenderId}`);
+			return res.status(400).send({ code: "INVALID_STATUS_TRANSITION" });
+		}
+
+		await db.query("UPDATE tender SET status = $1 WHERE id = $2", [
+			newStatus,
+			tenderId,
+		]);
+
+		res.status(200).send({ code: "SUCCESS" });
+	} catch (error) {
+		// console.error(`Server error while updating status for tender ${tenderId}:`, error);
+		res.status(500).send({ code: "SERVER_ERROR" });
+	}
+});
+
 router.get("/bidder-bid", async (req, res) => {
 	const bidderId = req.user.id;
 	const page = parseInt(req.query.page, 10) || 1;

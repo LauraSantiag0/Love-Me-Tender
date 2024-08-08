@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { get } from "./TenderClient";
+import { get, post } from "./TenderClient";
 
 const BuyerTenderList = () => {
 	const { pageNumber } = useParams();
@@ -8,6 +8,9 @@ const BuyerTenderList = () => {
 	const [buyerTenders, setBuyerTenders] = useState([]);
 	const [errorMsg, setErrorMsg] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [statusToUpdate, setStatusToUpdate] = useState(null);
+	const [selectedTenderId, setSelectedTenderId] = useState(null);
+	// const [statusOptions, setStatusOptions] = useState([]);
 	const [expandedTenderId, setExpandedTenderId] = useState(null);
 	const [pagination, setPagination] = useState({
 		itemsPerPage: 5,
@@ -16,7 +19,7 @@ const BuyerTenderList = () => {
 	});
 	const navigate = useNavigate();
 
-	const fetchTenders = async (page) => {
+	const fetchTenders = useCallback(async (page) => {
 		setLoading(true);
 		try {
 			const data = await get(`/api/buyer-tender?page=${page}`);
@@ -28,11 +31,52 @@ const BuyerTenderList = () => {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []);
+
+	const updateTenderStatus = useCallback(
+		async (tenderId, status) => {
+			try {
+				console.log("Updating tender status:", { tenderId, status }); // Debugging log
+
+				const response = await post(`/api/tender/${tenderId}/status`, {
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ status }), // Ensure the body is a JSON string with the status
+				});
+
+				console.log("API response status:", response.status); // Debugging log
+
+				if (response.ok) {
+					fetchTenders(currentPage);
+					setStatusToUpdate(null);
+					setSelectedTenderId(null);
+				} else {
+					const errorData = await response.json();
+					// console.error(`API error: ${errorData.code}`);
+					setErrorMsg(`Error: ${errorData.code}`);
+				}
+			} catch (error) {
+				// console.error("Error updating status:", error);
+				setErrorMsg("Error updating status");
+			}
+		},
+		[fetchTenders, currentPage]
+	);
 
 	useEffect(() => {
 		fetchTenders(currentPage);
-	}, [currentPage]);
+	}, [fetchTenders, currentPage]);
+
+	useEffect(() => {
+		if (statusToUpdate && selectedTenderId) {
+			updateTenderStatus(selectedTenderId, statusToUpdate);
+		}
+	}, [statusToUpdate, selectedTenderId, updateTenderStatus]);
+
+	// useEffect(() => {
+	// 	setStatusOptions(["Active", "In Review", "Closed"]);
+	// }, []);
 
 	const loadNextPage = () => {
 		if (pagination.currentPage < pagination.totalPages && !loading) {
@@ -144,6 +188,39 @@ const BuyerTenderList = () => {
 									{tender.no_of_bids_received}
 								</span>
 							</p>
+							{tender.status === "Active" && (
+								<div>
+									<button
+										onClick={() => {
+											setSelectedTenderId(tender.id);
+											setStatusToUpdate("In Review");
+										}}
+									>
+										{" "}
+										In Review
+									</button>
+									<button
+										onClick={() => {
+											setSelectedTenderId(tender.id);
+											setStatusToUpdate("Closed");
+										}}
+									>
+										Close Tender
+									</button>
+								</div>
+							)}
+							{tender.status === "In Review" && (
+								<div>
+									<button
+										onClick={() => {
+											setSelectedTenderId(tender.id);
+											setStatusToUpdate("Closed");
+										}}
+									>
+										Close Tender
+									</button>
+								</div>
+							)}
 						</div>
 					))
 				)}
