@@ -352,51 +352,77 @@ router.get("/buyer-tender", async (req, res) => {
 router.post("/tender/:tenderId/status", async (req, res) => {
 	const tenderId = parseInt(req.params.tenderId, 10);
 	const newStatus = req.body.status;
+	const validStatuses = ["Active", "In Review", "Closed", "Awarded"];
+	const user = req.user;
 
-	//   console.log("Received status update:", { tenderId, newStatus });
+	if (!validStatuses.includes(newStatus)) {
+		return res.status(400).send({ code: "INVALID_STATUS" });
+	}
 
-	const validStatuses = {
-		Active: ["In Review", "Closed"],
-		"In Review": ["Closed"],
-	};
+	let client;
 
 	try {
-		const tenderResult = await db.query(
-			"SELECT status, buyer_id FROM tender WHERE id = $1",
+		client = await pool.connect();
+
+		await client.query("BEGIN");
+
+		const tenderResult = await client.query(
+			"SELECT buyer_id, status FROM tender WHERE id = $1;",
 			[tenderId]
 		);
 
 		if (tenderResult.rowCount === 0) {
+			await client.query("ROLLBACK");
 			return res.status(404).send({ code: "TENDER_NOT_FOUND" });
 		}
 
 		const tender = tenderResult.rows[0];
-		// console.log(`Current status: ${tender.status}, New status: ${newStatus}`);
+		const currentStatus = tender.status;
+		const buyerId = tender.buyer_id;
 
-		if (tender.buyer_id !== req.user.id) {
-			// console.error(`Forbidden access attempt by user ${req.user.id} on tender ${tenderId}`);
+		if (user.id !== buyerId) {
+			await client.query("ROLLBACK");
 			return res.status(403).send({ code: "FORBIDDEN" });
 		}
 
-		if (tender.status === "Awarded" || tender.status === "Closed") {
-			// console.error(`Status change not allowed for tender ${tenderId} with status ${tender.status}`);
-			return res.status(400).send({ code: "STATUS_CHANGE_NOT_ALLOWED" });
+		if (currentStatus === "Awarded" || currentStatus === "Closed") {
+			await client.query("ROLLBACK");
+			return res.status(400).send({ code: "NO_CHANGE_ALLOWED" });
 		}
 
-		if (!validStatuses[tender.status].includes(newStatus)) {
-			// console.error(`Invalid status transition from ${tender.status} to ${newStatus} for tender ${tenderId}`);
-			return res.status(400).send({ code: "INVALID_STATUS_TRANSITION" });
+		if (currentStatus === "Active") {
+			if (newStatus !== "In Review" && newStatus !== "Closed") {
+				await client.query("ROLLBACK");
+				return res.status(400).send({ code: "INVALID_STATUS_TRANSITION" });
+			}
+		} else if (currentStatus === "In Review") {
+			if (newStatus !== "Closed") {
+				await client.query("ROLLBACK");
+				return res.status(400).send({ code: "INVALID_STATUS_TRANSITION" });
+			}
 		}
 
-		await db.query("UPDATE tender SET status = $1 WHERE id = $2", [
-			newStatus,
-			tenderId,
-		]);
+		const updateResult = await client.query(
+			"UPDATE tender SET status = $1 WHERE id = $2;",
+			[newStatus, tenderId]
+		);
 
-		res.status(200).send({ code: "SUCCESS" });
+		if (updateResult.rowCount > 0) {
+			await client.query("COMMIT");
+			return res.status(200).send({ code: "SUCCESS" });
+		} else {
+			await client.query("ROLLBACK");
+			return res.status(500).send({ code: "SERVER_ERROR" });
+		}
 	} catch (error) {
-		// console.error(`Server error while updating status for tender ${tenderId}:`, error);
-		res.status(500).send({ code: "SERVER_ERROR" });
+		if (client) {
+			await client.query("ROLLBACK");
+		}
+		return res.status(500).send({ code: "SERVER_ERROR" });
+	} finally {
+		if (client) {
+			client.release();
+		}
 	}
 });
 
