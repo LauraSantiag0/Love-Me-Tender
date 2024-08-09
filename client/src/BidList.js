@@ -91,37 +91,34 @@ const BidList = () => {
 			<h2 className="heading">Tender Details</h2>
 			<div className="container">
 				{updateStatus && <div className="message">{updateStatus}</div>}
-				<div className="tender-details">
-					<p>
-						<strong>Status: </strong>
-						{tender.status}
-					</p>
+				<div className="card">
+					<span className="posted-on-date">
+						{" "}
+						Posted on: {new Date(tender.creation_date).toLocaleDateString()}
+					</span>
+					<span data-status={tender.status}>{tender.status}</span>
 					<h2>{`Tender ID: ${tender.id} - Tender Title: ${tender.title}`}</h2>
-					<p>
-						<strong>Creation Date: </strong>
-						{new Date(tender.creation_date).toLocaleDateString()}
-					</p>
-					<p>
-						<strong>Closing Date: </strong>
-						{new Date(tender.closing_date).toLocaleDateString()}
-					</p>
-					<p>
-						<strong>Announcement Date: </strong>
-						{new Date(tender.announcement_date).toLocaleDateString()}
-					</p>
-					<p>
-						<strong>Project Deadline Date: </strong>
-						{new Date(tender.deadline).toLocaleDateString()}
-					</p>
-					<p>
-						<strong>Description: </strong>
-						{tender.description}
-					</p>
+					<div className="flex">
+						<p>
+							<strong>Closing Date: </strong>
+							{new Date(tender.closing_date).toLocaleDateString()}
+						</p>
+						<p>
+							<strong>Announcement Date: </strong>
+							{new Date(tender.announcement_date).toLocaleDateString()}
+						</p>
+						<p>
+							<strong>Project Deadline Date: </strong>
+							{new Date(tender.deadline).toLocaleDateString()}
+						</p>
+					</div>
+					<h3>Description: </h3>
+					<p className="cover-letter">{tender.description}</p>
 					<p>
 						<strong>Number of Bids: </strong>
 						{tender.no_of_bids_received}
 					</p>
-					<p>
+					<p className="last-update right">
 						<strong>Last Update: </strong>
 						{new Date(tender.last_update).toLocaleString()}
 					</p>
@@ -139,7 +136,9 @@ const BidList = () => {
 								<span className="posted-on-date">
 									{new Date(bid.bidding_date).toLocaleDateString()}
 								</span>
-								<span className="bid-status">{bid.status}</span>
+								<span data-status={bid.status} className="bid-status">
+									{bid.status}
+								</span>
 							</p>
 							<p className="title">
 								<strong>Bidder Id:</strong> {bid.bidder_id} |{" "}
