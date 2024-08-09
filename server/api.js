@@ -721,10 +721,6 @@ router.post("/bid", async (req, res) => {
 		try {
 			await client.query("BEGIN");
 
-			const buyerIdQuery = "SELECT buyer_id FROM tender WHERE id = $1";
-			const buyerIdResult = await client.query(buyerIdQuery, [tenderId]);
-			const buyerId = parseInt(buyerIdResult.rows[0].buyer_id, 10);
-
 			const checkBidQuery = `
 				SELECT * FROM bid WHERE tender_id = $1 AND bidder_id = $2 AND status = 'Active'
 			`;
@@ -737,13 +733,12 @@ router.post("/bid", async (req, res) => {
 				return res.status(400).json({ code: "DUPLICATE_ENTRY" });
 			}
 			const bidQuery = `
-                      INSERT INTO bid (tender_id, bidder_id, buyer_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
-					  VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING bid_id
+                      INSERT INTO bid (tender_id, bidder_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
+					  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING bid_id
                     `;
 			const bidValues = [
 				tenderId,
 				bidderId,
-				buyerId,
 				biddingDate,
 				status,
 				bidding_amount,
