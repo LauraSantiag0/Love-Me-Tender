@@ -532,11 +532,10 @@ router.get("/bid", async (req, res) => {
 			`;
 			totalBidsParams = [userId, tenderID];
 			bidsQuery = `
-SELECT bid.*, bidder.first_name, bidder.last_name, ba.attachment
+SELECT bid.*, bidder.first_name, bidder.last_name
 				FROM bid
 				JOIN bidder ON bid.bidder_id = bidder.user_id
 				JOIN tender ON bid.tender_id = tender.id
-				JOIN bid_attachment as ba ON bid.bid_id = ba.bid_id
 				WHERE tender.buyer_id = $1
   				AND bid.tender_id = $2
 				LIMIT $3 OFFSET $4;
@@ -722,6 +721,12 @@ router.post("/bid", async (req, res) => {
 		try {
 			await client.query("BEGIN");
 
+			const buyerIdQuery = "SELECT buyer_id FROM tender WHERE id = $1";
+			const buyerIdResult = await client.query(buyerIdQuery, [tenderId]);
+			//  console.log(buyerIdResult);
+			const buyerId = parseInt(buyerIdResult.rows[0].buyer_id, 10);
+			//  console.log(buyerId, "adniya");
+
 			const checkBidQuery = `
 				SELECT * FROM bid WHERE tender_id = $1 AND bidder_id = $2 AND status = 'Active'
 			`;
@@ -734,12 +739,13 @@ router.post("/bid", async (req, res) => {
 				return res.status(400).json({ code: "DUPLICATE_ENTRY" });
 			}
 			const bidQuery = `
-                      INSERT INTO bid (tender_id, bidder_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
-					  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING bid_id
+                      INSERT INTO bid (tender_id, bidder_id, buyer_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
+					  VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING bid_id
                     `;
 			const bidValues = [
 				tenderId,
 				bidderId,
+				buyerId,
 				biddingDate,
 				status,
 				bidding_amount,
