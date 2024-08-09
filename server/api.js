@@ -532,7 +532,7 @@ router.get("/bid", async (req, res) => {
 			`;
 			totalBidsParams = [userId, tenderID];
 			bidsQuery = `
-SELECT bid.*, bidder.first_name, bidder.last_name
+				SELECT bid.*, bidder.first_name, bidder.last_name
 				FROM bid
 				JOIN bidder ON bid.bidder_id = bidder.user_id
 				JOIN tender ON bid.tender_id = tender.id
@@ -723,9 +723,7 @@ router.post("/bid", async (req, res) => {
 
 			const buyerIdQuery = "SELECT buyer_id FROM tender WHERE id = $1";
 			const buyerIdResult = await client.query(buyerIdQuery, [tenderId]);
-			//  console.log(buyerIdResult);
 			const buyerId = parseInt(buyerIdResult.rows[0].buyer_id, 10);
-			//  console.log(buyerId, "adniya");
 
 			const checkBidQuery = `
 				SELECT * FROM bid WHERE tender_id = $1 AND bidder_id = $2 AND status = 'Active'
