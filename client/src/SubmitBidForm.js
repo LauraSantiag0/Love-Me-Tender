@@ -4,7 +4,7 @@ import { get, post } from "./TenderClient";
 import "./SubmitBidForm.css";
 import Logo from "./assets/images/CTY-logo-rectangle.png";
 
-const SubmitBidForm = () => {
+const SubmitBidForm = ({ onBidSubmitted }) => {
 	const { tenderId } = useParams();
 	const [coverLetter, setCoverLetter] = useState("");
 	const [proposedDuration, setProposedDuration] = useState("");
@@ -71,6 +71,7 @@ const SubmitBidForm = () => {
 			setErrorStatus(null);
 			setErrors([]);
 			alert("Bid submitted successfully!");
+			onBidSubmitted && onBidSubmitted();
 			navigate("/dashboard");
 		} catch (error) {
 			const { status, data } = error.response;
