@@ -540,10 +540,6 @@ router.post("/tender/:tenderId/status", async (req, res) => {
 			Awarded: [],
 		};
 
-		if (currentStatus === "Awarded" || currentStatus === "Cancelled") {
-			await client.query("ROLLBACK");
-			return res.status(400).send({ code: "NO_CHANGE_ALLOWED" });
-		}
 		const allowedStatuses = allowedTenderStatusTransitions[currentStatus];
 
 		if (!allowedStatuses || !allowedStatuses.includes(newStatus)) {
