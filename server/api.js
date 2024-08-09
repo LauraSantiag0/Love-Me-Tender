@@ -734,7 +734,7 @@ router.post("/bid", async (req, res) => {
 			}
 			const bidQuery = `
                       INSERT INTO bid (tender_id, bidder_id, bidding_date, status, bidding_amount, cover_letter, suggested_duration_days)
-					  VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING bid_id
+					  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING bid_id
                     `;
 			const bidValues = [
 				tenderId,
