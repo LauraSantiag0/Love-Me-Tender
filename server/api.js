@@ -260,7 +260,7 @@ router.post("/tender", async (req, res) => {
 	}
 
 	if (announcementDate < closingDate) {
-		newErrors.push("Tender Announcement Date must be before the Closing Date.");
+		newErrors.push("Tender Announcement Date must be after the Closing Date.");
 	}
 
 	if (deadlineDate < announcementDate) {
