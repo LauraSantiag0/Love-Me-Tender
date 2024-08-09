@@ -259,7 +259,7 @@ router.post("/tender", async (req, res) => {
 		newErrors.push("Tender Closing Date cannot be in the past.");
 	}
 
-	if (announcementDate > closingDate) {
+	if (announcementDate < closingDate) {
 		newErrors.push("Tender Announcement Date must be before the Closing Date.");
 	}
 
