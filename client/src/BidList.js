@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { get, post } from "./TenderClient";
 import "./BidList.css";
@@ -10,7 +10,6 @@ const BidList = () => {
 	const [tender, setTender] = useState(null);
 	const [updateStatus, setUpdatedStatus] = useState("");
 	const [errorMsg, setErrorMsg] = useState(null);
-	const [tenderErrorMsg, setTenderErrorMsg] = useState(null);
 	const [statusError, setStatusError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
@@ -20,46 +19,35 @@ const BidList = () => {
 		totalPages: 1,
 	});
 
-	const fetchBids = async (tenderId, page) => {
+	const fetchData = useCallback(async () => {
 		setLoading(true);
 		try {
-			const data = await get(`/api/bid?tender_id=${tenderId}&page=${page}`);
-			setBids(data.results);
-			setPagination(data.pagination);
+			const tenderData = await get(`/api/tenders/${tenderId}`);
+			setTender(tenderData.resource);
+
+			const bidsData = await get(
+				`/api/bid?tender_id=${tenderId}&page=${currentPage}`
+			);
+			setBids(bidsData.results);
+			setPagination(bidsData.pagination);
+
 			setErrorMsg(null);
 		} catch (error) {
-			setErrorMsg("Error fetching bids!");
+			setErrorMsg("Error fetching data!");
 		} finally {
 			setLoading(false);
 		}
-	};
-
-	const fetchTender = async (tenderId) => {
-		setLoading(true);
-		try {
-			const data = await get(`/api/tenders/${tenderId}`);
-			setTender(data.resource);
-			setTenderErrorMsg(null);
-		} catch (error) {
-			setTenderErrorMsg("Error fetching tenders!");
-		} finally {
-			setLoading(false);
-		}
-	};
+	}, [tenderId, currentPage]);
 
 	useEffect(() => {
-		fetchBids(tenderId, currentPage);
-	}, [currentPage, tenderId]);
-
-	useEffect(() => {
-		fetchTender(tenderId);
-	}, [tenderId]);
+		fetchData();
+	}, [fetchData]);
 
 	const handleBidStatusChange = async (bidId, status) => {
 		try {
 			await post(`/api/bid/${bidId}/status`, { status });
 			setUpdatedStatus(`Updated the status for bid id ${bidId} to ${status}!`);
-			fetchBids(tenderId, currentPage);
+			await fetchData();
 		} catch (error) {
 			setStatusError("An error occurred while updating bid status!");
 		}
@@ -91,9 +79,6 @@ const BidList = () => {
 	if (errorMsg) {
 		return <div className="msg">{errorMsg}</div>;
 	}
-	if (tenderErrorMsg) {
-		return <div className="msg">{tenderErrorMsg}</div>;
-	}
 	if (loading) {
 		return <div className="msg">Loading...</div>;
 	}
@@ -106,45 +91,41 @@ const BidList = () => {
 			<h2 className="heading">Tender Details</h2>
 			<div className="container">
 				{updateStatus && <div className="message">{updateStatus}</div>}
-				{tender ? (
-					<div className="tender-details">
-						<p>
-							<strong>Status: </strong>
-							{tender.status}
-						</p>
-						<h2>{`Tender ID: ${tender.id} - Tender Title: ${tender.title}`}</h2>
-						<p>
-							<strong>Creation Date: </strong>
-							{new Date(tender.creation_date).toLocaleDateString()}
-						</p>
-						<p>
-							<strong>Closing Date: </strong>
-							{new Date(tender.closing_date).toLocaleDateString()}
-						</p>
-						<p>
-							<strong>Announcement Date: </strong>
-							{new Date(tender.announcement_date).toLocaleDateString()}
-						</p>
-						<p>
-							<strong>Project Deadline Date: </strong>
-							{new Date(tender.deadline).toLocaleDateString()}
-						</p>
-						<p>
-							<strong>Description: </strong>
-							{tender.description}
-						</p>
-						<p>
-							<strong>Number of Bids: </strong>
-							{tender.no_of_bids_received}
-						</p>
-						<p>
-							<strong>Last Update: </strong>
-							{new Date(tender.last_update).toLocaleString()}
-						</p>
-					</div>
-				) : (
-					<div className="msg">Tender details not available.</div>
-				)}
+				<div className="tender-details">
+					<p>
+						<strong>Status: </strong>
+						{tender.status}
+					</p>
+					<h2>{`Tender ID: ${tender.id} - Tender Title: ${tender.title}`}</h2>
+					<p>
+						<strong>Creation Date: </strong>
+						{new Date(tender.creation_date).toLocaleDateString()}
+					</p>
+					<p>
+						<strong>Closing Date: </strong>
+						{new Date(tender.closing_date).toLocaleDateString()}
+					</p>
+					<p>
+						<strong>Announcement Date: </strong>
+						{new Date(tender.announcement_date).toLocaleDateString()}
+					</p>
+					<p>
+						<strong>Project Deadline Date: </strong>
+						{new Date(tender.deadline).toLocaleDateString()}
+					</p>
+					<p>
+						<strong>Description: </strong>
+						{tender.description}
+					</p>
+					<p>
+						<strong>Number of Bids: </strong>
+						{tender.no_of_bids_received}
+					</p>
+					<p>
+						<strong>Last Update: </strong>
+						{new Date(tender.last_update).toLocaleString()}
+					</p>
+				</div>
 			</div>
 			<h2 className="heading">Bids</h2>
 			<div className="container">
