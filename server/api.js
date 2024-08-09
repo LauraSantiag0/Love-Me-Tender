@@ -275,10 +275,6 @@ router.post("/tender", async (req, res) => {
 		newErrors.push("Please select at least one skill.");
 	}
 
-	if (!buyerId) {
-		newErrors.push("Buyer ID is required.");
-	}
-
 	if (newErrors.length > 0) {
 		return res
 			.status(400)
