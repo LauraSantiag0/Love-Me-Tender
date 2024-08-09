@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { get, post } from "./TenderClient";
 import "./BidList.css";
 
-const BidList = () => {
+const BuyerTenderList = () => {
 	const { pageNumber } = useParams();
 	const { tenderId } = useParams();
 	const currentPage = pageNumber ? parseInt(pageNumber, 10) : 1;
@@ -152,4 +152,4 @@ const BidList = () => {
 	);
 };
 
-export default BidList;
+export default BuyerTenderList;
