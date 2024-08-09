@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { get } from "./TenderClient";
-import SubmitBidForm from "./SubmitBidForm";
 
 const BuyerTenderList = () => {
 	const { pageNumber } = useParams();
@@ -64,10 +63,6 @@ const BuyerTenderList = () => {
 
 	const handleTenderClick = (id) => {
 		setExpandedTenderId((prevId) => (prevId === id ? null : id));
-	};
-
-	const handleBidSubmitted = async () => {
-		await fetchTenders(pagination.currentPage); // Re-fetch tenders to update the bid count
 	};
 
 	return (
@@ -149,10 +144,6 @@ const BuyerTenderList = () => {
 									{tender.no_of_bids_received}
 								</span>
 							</p>
-							<SubmitBidForm
-								tenderId={tender.id}
-								onBidSubmitted={handleBidSubmitted}
-							/>
 						</div>
 					))
 				)}
