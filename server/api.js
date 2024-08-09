@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import mail from "./mail";
 
 const itemsPerPage = 25;
+const validTenderStatuses = ["Active", "In Review", "Cancelled", "Awarded"];
 const router = Router();
 
 const allowlist = {
@@ -352,10 +353,9 @@ router.get("/buyer-tender", async (req, res) => {
 router.post("/tender/:tenderId/status", async (req, res) => {
 	const tenderId = parseInt(req.params.tenderId, 10);
 	const newStatus = req.body.status;
-	const validStatuses = ["Active", "In Review", "Closed", "Awarded"];
-	const user = req.user;
+	const buyerId = req.user.id;
 
-	if (!validStatuses.includes(newStatus)) {
+	if (!validTenderStatuses.includes(newStatus)) {
 		return res.status(400).send({ code: "INVALID_STATUS" });
 	}
 
@@ -367,8 +367,8 @@ router.post("/tender/:tenderId/status", async (req, res) => {
 		await client.query("BEGIN");
 
 		const tenderResult = await client.query(
-			"SELECT buyer_id, status FROM tender WHERE id = $1;",
-			[tenderId]
+			"SELECT buyer_id, status FROM tender WHERE id = $1 AND buyer_id = $2",
+			[tenderId, buyerId]
 		);
 
 		if (tenderResult.rowCount === 0) {
@@ -378,30 +378,24 @@ router.post("/tender/:tenderId/status", async (req, res) => {
 
 		const tender = tenderResult.rows[0];
 		const currentStatus = tender.status;
-		const buyerId = tender.buyer_id;
+		const allowedTenderStatusTransitions = {
+			Active: ["In Review", "Cancelled"],
+			"In Review": ["Cancelled"],
+			Cancelled: [],
+			Awarded: [],
+		};
 
-		if (user.id !== buyerId) {
-			await client.query("ROLLBACK");
-			return res.status(403).send({ code: "FORBIDDEN" });
-		}
-
-		if (currentStatus === "Awarded" || currentStatus === "Closed") {
+		if (currentStatus === "Awarded" || currentStatus === "Cancelled") {
 			await client.query("ROLLBACK");
 			return res.status(400).send({ code: "NO_CHANGE_ALLOWED" });
 		}
 
-		if (currentStatus === "Active") {
-			if (newStatus !== "In Review" && newStatus !== "Closed") {
-				await client.query("ROLLBACK");
-				return res.status(400).send({ code: "INVALID_STATUS_TRANSITION" });
-			}
-		} else if (currentStatus === "In Review") {
-			if (newStatus !== "Closed") {
-				await client.query("ROLLBACK");
-				return res.status(400).send({ code: "INVALID_STATUS_TRANSITION" });
-			}
-		}
+		const allowedStatuses = allowedTenderStatusTransitions[currentStatus];
 
+		if (!allowedStatuses || !allowedStatuses.includes(newStatus)) {
+			await client.query("ROLLBACK");
+			return res.status(400).send({ code: "INVALID_STATUS_TRANSITION" });
+		}
 		const updateResult = await client.query(
 			"UPDATE tender SET status = $1 WHERE id = $2;",
 			[newStatus, tenderId]

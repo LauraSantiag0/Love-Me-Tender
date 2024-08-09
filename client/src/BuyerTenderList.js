@@ -23,7 +23,6 @@ const BuyerTenderList = () => {
 		setLoading(true);
 		try {
 			const data = await get(`/api/buyer-tender?page=${page}`);
-
 			setTenders(data.results);
 			setPagination(data.pagination);
 			setErrorMsg(null);
@@ -50,8 +49,8 @@ const BuyerTenderList = () => {
 	};
 
 	const handleEditStatusClick = (tenderId, currentStatus) => {
-		if (currentStatus === "Awarded" || currentStatus === "Closed") {
-			alert("No changes allowed for Awarded or Closed tenders.");
+		if (currentStatus === "Awarded" || currentStatus === "Cancelled") {
+			alert("No changes allowed for Awarded or Cancelled tenders.");
 			return;
 		}
 		setEditStatusId(tenderId);
@@ -192,7 +191,7 @@ const BuyerTenderList = () => {
 									{tender.no_of_bids_received}
 								</span>
 							</p>
-							{tender.status !== "Awarded" && tender.status !== "Closed" && (
+							{tender.status !== "Awarded" && tender.status !== "Cancelled" && (
 								<>
 									{editStatusId === tender.id ? (
 										<div className="status-edit">
@@ -201,10 +200,10 @@ const BuyerTenderList = () => {
 												{tender.status === "Active" ? (
 													<>
 														<option value="In Review">In Review</option>
-														<option value="Closed">Closed</option>
+														<option value="Cancelled">Cancel</option>
 													</>
 												) : tender.status === "In Review" ? (
-													<option value="Closed">Closed</option>
+													<option value="Cancelled">Cancel</option>
 												) : null}
 											</select>
 											<button
